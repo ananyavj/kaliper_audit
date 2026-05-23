@@ -22,6 +22,7 @@ kaliper.db
 kaliper.db-journal
 kaliper.db-wal
 kaliper.db-shm
+ForMe.txt
 
 .DS_Store
 Thumbs.db
