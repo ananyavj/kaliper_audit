@@ -1,0 +1,44 @@
+{
+  "events": [
+    {
+      "name": "Product Viewed",
+      "required_properties": ["product_id", "title"],
+      "property_types": {
+        "product_id": "string",
+        "title": "string"
+      },
+      "identity_required": false,
+      "allowed_previous_events": []
+    },
+    {
+      "name": "Product Added",
+      "required_properties": ["product_id", "quantity"],
+      "property_types": {
+        "product_id": "string",
+        "quantity": "number"
+      },
+      "identity_required": true,
+      "allowed_previous_events": ["Product Viewed"]
+    },
+    {
+      "name": "Checkout Started",
+      "required_properties": ["cart_id"],
+      "property_types": {
+        "cart_id": "string"
+      },
+      "identity_required": true,
+      "allowed_previous_events": ["Product Added"]
+    },
+    {
+      "name": "Order Completed",
+      "required_properties": ["order_id", "revenue", "currency"],
+      "property_types": {
+        "order_id": "string",
+        "revenue": "number",
+        "currency": "string"
+      },
+      "identity_required": true,
+      "allowed_previous_events": ["Checkout Started"]
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+ni app.py -ItemType File ... creates files via terminal
+mkdir folder_name ...creates folder via terminal
+mkdir backend\api\routes ... creates nested folders
+cd ..
+code . 
+
+------------------------------------------------------------------------------------------------------
+
+Extremely important future capability
+
+Later you can even do:
+
+live events
+vs
+current plan version
+
+AND ALSO:
+
+live events
+vs
+previous plan version
+
+This helps companies during migrations.
+
+--------------------------------------------------------------------------------------------------------
+
+Your current scorer is good enough for:
+MVP demos
+QA reports
+governance dashboards
+scorecards
+issue summaries
+
+But not yet:
+
+enterprise-grade reliability scoring
+anomaly intelligence
+impact-aware prioritization
+
+Those are later-stage platform capabilities.
+
+------------------------------------------------------------------------------------------------------

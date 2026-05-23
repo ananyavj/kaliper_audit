@@ -1,0 +1,44 @@
+{
+  "events": [
+    {
+      "name": "Signup",
+      "required_properties": ["account_id", "plan"],
+      "property_types": {
+        "account_id": "string",
+        "plan": "string"
+      },
+      "identity_required": true,
+      "allowed_previous_events": []
+    },
+    {
+      "name": "Login",
+      "required_properties": ["method"],
+      "property_types": {
+        "method": "string"
+      },
+      "identity_required": true,
+      "allowed_previous_events": ["Signup"]
+    },
+    {
+      "name": "Trial Started",
+      "required_properties": ["trial_id", "plan"],
+      "property_types": {
+        "trial_id": "string",
+        "plan": "string"
+      },
+      "identity_required": true,
+      "allowed_previous_events": ["Signup"]
+    },
+    {
+      "name": "Subscription Started",
+      "required_properties": ["subscription_id", "plan", "billing_status"],
+      "property_types": {
+        "subscription_id": "string",
+        "plan": "string",
+        "billing_status": "string"
+      },
+      "identity_required": true,
+      "allowed_previous_events": ["Trial Started"]
+    }
+  ]
+}
