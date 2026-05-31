@@ -9,7 +9,13 @@ DB_PATH = Path(__file__).resolve().parent.parent / "kaliper.db"
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    # Always produce a plain UTC timestamp in the form "YYYY-MM-DDTHH:MM:SS.ffffff"
+    # (no timezone offset suffix).  SQLite compares timestamps as strings
+    # lexicographically, so mixing "+00:00" suffixed strings (Python 3.11+
+    # isoformat() default) with suffix-free strings breaks ordering in
+    # auto_close_idle_runs and any other range queries.  Stripping the offset
+    # keeps all stored timestamps in the same format.
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")
 
 
 def get_connection(db_path: str | Path = DB_PATH) -> sqlite3.Connection:
@@ -33,10 +39,11 @@ def initialize_db(db_path: str | Path = DB_PATH) -> None:
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS workspaces (
-            workspace_id TEXT PRIMARY KEY,
+            workspace_id TEXT NOT NULL,
             tenant_id TEXT NOT NULL,
             workspace_name TEXT NOT NULL,
             created_at TEXT NOT NULL,
+            PRIMARY KEY (tenant_id, workspace_id),
             FOREIGN KEY (tenant_id) REFERENCES tenants(tenant_id)
         )
     """)
@@ -258,6 +265,73 @@ def store_event(
     conn.close()
 
 
+def store_events_bulk(
+    events: list[dict[str, Any]],
+    db_path: str | Path = DB_PATH,
+) -> None:
+    if not events:
+        return
+    conn = get_connection(db_path)
+    cur = conn.cursor()
+
+    rows = []
+    now_str = _utc_now()
+    for e in events:
+        rows.append((
+            e["tenant_id"], e["workspace_id"], e.get("run_id"),
+            e["source"], e["name"], e.get("user_id"), e.get("anonymous_id"),
+            e["timestamp"], e["event_id"], json.dumps(e["properties"]),
+            json.dumps(e["raw_json"]), now_str
+        ))
+
+    cur.executemany(
+        """
+        INSERT INTO events (
+            tenant_id, workspace_id, run_id, source, name, user_id, anonymous_id,
+            timestamp, event_id, properties_json, raw_json, created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        rows,
+    )
+
+    conn.commit()
+    conn.close()
+
+
+def store_issues_bulk(
+    issues: list[dict[str, Any]],
+    db_path: str | Path = DB_PATH,
+) -> None:
+    if not issues:
+        return
+    conn = get_connection(db_path)
+    cur = conn.cursor()
+
+    rows = []
+    now_str = _utc_now()
+    for i in issues:
+        rows.append((
+            i["tenant_id"], i["workspace_id"], i.get("run_id"),
+            i["event_id"], i["event_name"], i["issue_type"],
+            i["severity"], i["message"], now_str
+        ))
+
+    cur.executemany(
+        """
+        INSERT INTO issues (
+            tenant_id, workspace_id, run_id, event_id, event_name,
+            issue_type, severity, message, created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        rows,
+    )
+
+    conn.commit()
+    conn.close()
+
+
 def store_issue(
     *,
     tenant_id: str,
@@ -395,7 +469,8 @@ def auto_close_idle_runs(
     """
     from datetime import timedelta
     cutoff_dt = datetime.now(timezone.utc) - timedelta(minutes=idle_minutes)
-    cutoff_str = cutoff_dt.isoformat()
+    # Use the same suffix-free format as _utc_now() so SQLite string comparison works.
+    cutoff_str = cutoff_dt.strftime("%Y-%m-%dT%H:%M:%S.%f")
 
     conn = get_connection(db_path)
     cur = conn.cursor()

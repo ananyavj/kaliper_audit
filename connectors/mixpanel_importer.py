@@ -44,7 +44,6 @@ import argparse
 import hashlib
 import json
 import time
-import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -62,7 +61,7 @@ from core.storage import event_id_exists
 
 load_dotenv()
 
-INGEST_URL = "http://127.0.0.1:5000/ingest"
+INGEST_BATCH_URL = "http://127.0.0.1:5000/ingest-batch"
 
 # Mixpanel Export API granularity is per-day
 DAY_STEP = timedelta(days=1)
@@ -265,40 +264,49 @@ def _normalize(raw: dict[str, Any]) -> dict[str, Any]:
 # Send one normalised event to the local ingestion server -- with retry
 # ---------------------------------------------------------------------------
 
-def _send(connector: dict[str, Any], event: dict[str, Any]) -> None:
-    envelope = {
-        "tenant_id": connector["tenant_id"],
-        "workspace_id": connector["workspace_id"],
-        "environment": connector["config"].get("environment", "production"),
-        "source": "mixpanel",
-        "event": event,
-    }
+def _send_batch(connector: dict[str, Any], events: list[dict[str, Any]]) -> None:
+    if not events:
+        return
+        
+    envelopes = [
+        {
+            "tenant_id": connector["tenant_id"],
+            "workspace_id": connector["workspace_id"],
+            "environment": connector["config"].get("environment", "production"),
+            "source": "mixpanel",
+            "event": e,
+        }
+        for e in events
+    ]
 
     wait = RETRY_BASE_WAIT
     for attempt in range(1, MAX_RETRIES + 2):
         try:
-            resp = requests.post(INGEST_URL, json=envelope, timeout=30)
+            resp = requests.post(INGEST_BATCH_URL, json=envelopes, timeout=60)
             if resp.status_code == 200:
                 return
-            raise RuntimeError(
-                f"Ingestion rejected event '{event.get('name')}': "
-                f"{resp.status_code} {resp.text[:200]}"
-            )
-        except requests.exceptions.ConnectionError as exc:
+            if 400 <= resp.status_code < 500:
+                raise RuntimeError(
+                    f"Ingestion rejected batch (client error): "
+                    f"{resp.status_code} {resp.text[:200]}"
+                )
             if attempt > MAX_RETRIES:
                 raise RuntimeError(
-                    f"Ingestion server unreachable after {MAX_RETRIES} retries "
-                    f"for event '{event.get('name')}'"
-                ) from exc
+                    f"Ingestion server error after {MAX_RETRIES} retries for batch: "
+                    f"{resp.status_code} {resp.text[:200]}"
+                )
+            print(f"  [retry {attempt}/{MAX_RETRIES}] ingest {resp.status_code} -- waiting {wait:.0f}s")
+            time.sleep(wait)
+            wait *= 2
+        except requests.exceptions.ConnectionError as exc:
+            if attempt > MAX_RETRIES:
+                raise RuntimeError(f"Ingestion server unreachable after {MAX_RETRIES} retries for batch") from exc
             print(f"  [retry {attempt}/{MAX_RETRIES}] ingest connection error -- waiting {wait:.0f}s")
             time.sleep(wait)
             wait *= 2
         except requests.exceptions.Timeout:
             if attempt > MAX_RETRIES:
-                raise RuntimeError(
-                    f"Ingestion timed out after {MAX_RETRIES} retries "
-                    f"for event '{event.get('name')}'"
-                )
+                raise RuntimeError(f"Ingestion timed out after {MAX_RETRIES} retries for batch")
             print(f"  [retry {attempt}/{MAX_RETRIES}] ingest timeout -- waiting {wait:.0f}s")
             time.sleep(wait)
             wait *= 2
@@ -384,6 +392,7 @@ def run_incremental_import(
         slice_sent = 0
         slice_skipped = 0
 
+        events_to_send = []
         for raw in raw_events:
             event = _normalize(raw)
             event_id = event["event_id"]
@@ -398,12 +407,15 @@ def run_incremental_import(
                 slice_skipped += 1
                 continue
 
-            try:
-                _send(connector, event)
-                slice_sent += 1
-            except RuntimeError as exc:
-                print(f"  [warn] {exc} -- skipping event")
-                slice_skipped += 1
+            events_to_send.append(event)
+            slice_sent += 1
+
+        try:
+            _send_batch(connector, events_to_send)
+        except RuntimeError as exc:
+            print(f"  [warn] {exc} -- skipping batch")
+            slice_skipped += len(events_to_send)
+            slice_sent = 0
 
         total_sent += slice_sent
         total_skipped += slice_skipped

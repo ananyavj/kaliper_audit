@@ -144,7 +144,8 @@ class ConnectorThread(threading.Thread):
     ) -> None:
         super().__init__(daemon=True)
         self.connector = connector
-        self.interval_seconds = max(MIN_POLL_INTERVAL_MINUTES, interval_minutes) * 60
+        self._requested_interval_minutes = max(MIN_POLL_INTERVAL_MINUTES, interval_minutes)
+        self.interval_seconds = self._requested_interval_minutes * 60
         self.stop_event = stop_event
         self.run_once = run_once
         self.dry_run = dry_run
@@ -158,7 +159,7 @@ class ConnectorThread(threading.Thread):
              f"started — interval={self.interval_seconds // 60}min "
              f"type={self.connector['connector_type']}")
 
-        last_sync_at: float = 0.0   # epoch seconds; 0 = never synced in this run
+        last_sync_at: float = -self.interval_seconds   # force immediate first sync
 
         while not self.stop_event.is_set():
             now = time.monotonic()
@@ -276,9 +277,11 @@ def run_scheduler(
                         f"WARNING: thread '{thread.name}' is no longer alive. "
                         "Respawning it to resume coverage for that connector."
                     )
+                    # Use _requested_interval_minutes (the clamped value stored on
+                    # the original thread) so the floor is applied exactly once.
                     new_thread = ConnectorThread(
                         connector=thread.connector,
-                        interval_minutes=thread.interval_seconds // 60,
+                        interval_minutes=thread._requested_interval_minutes,
                         stop_event=thread.stop_event,
                         run_once=thread.run_once,
                         dry_run=thread.dry_run,

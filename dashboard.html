@@ -400,6 +400,43 @@
     .affected-tag { padding: 4px 10px; background: var(--accent-l); color: var(--accent); border-radius: 6px; font-size: 0.7rem; font-weight: 500; }
     .note-tag { display: inline-block; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2); padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; margin: 2px 3px 2px 0; }
 
+    /* ── NEW RUN MODAL ── */
+    .newrun-overlay {
+      position: fixed; inset: 0;
+      background: rgba(10,15,30,0.55);
+      display: none; align-items: center; justify-content: center;
+      z-index: 1100; backdrop-filter: blur(4px);
+    }
+    .newrun-overlay.active { display: flex; }
+    .newrun-modal {
+      background: var(--surface); border-radius: var(--radius-lg);
+      width: 420px; padding: 28px 30px; box-shadow: var(--shadow-md);
+    }
+    .newrun-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
+    .newrun-desc  { font-size: 0.78rem; color: var(--text-2); margin-bottom: 20px; line-height: 1.5; }
+    .newrun-label { font-size: 0.72rem; color: var(--text-3); display: block; margin-bottom: 6px; }
+    .newrun-input {
+      width: 100%; padding: 9px 12px;
+      border: 1px solid var(--border-2); border-radius: var(--radius);
+      font-family: var(--font); font-size: 0.85rem; color: var(--text);
+      margin-bottom: 6px;
+    }
+    .newrun-input:focus { outline: none; border-color: var(--accent); }
+    .newrun-hint  { font-size: 0.68rem; color: var(--text-3); margin-bottom: 20px; }
+    .newrun-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .newrun-cancel {
+      background: var(--bg); color: var(--text-2);
+      border: 1px solid var(--border); padding: 8px 18px;
+      border-radius: var(--radius); font-family: var(--font);
+      font-size: 0.8rem; cursor: pointer;
+    }
+    .newrun-confirm {
+      background: var(--accent); color: white; border: none;
+      padding: 8px 20px; border-radius: var(--radius);
+      font-family: var(--font); font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    }
+    .newrun-confirm:hover { background: #3d5be0; }
+
     @media (max-width: 1024px) {
       .sidebar { width: 200px; }
       .main { margin-left: 200px; }
@@ -430,14 +467,35 @@
     </div>
     <div style="font-size:0.8rem;color:var(--text-2);margin-bottom:20px;">Sign in to your workspace</div>
     <label style="display:block;font-size:0.72rem;color:var(--text-3);margin-bottom:5px;">Tenant ID</label>
-    <input id="loginTenant" type="text" placeholder="e.g. tenant_demo" onkeydown="loginKeydown(event)"
+    <input id="loginTenant" type="text" placeholder="tenant_demo" value="tenant_demo" onkeydown="loginKeydown(event)"
       style="width:100%;padding:9px 11px;border:1px solid var(--border-2);border-radius:var(--radius);font-family:var(--font);font-size:0.85rem;margin-bottom:12px;" />
     <label style="display:block;font-size:0.72rem;color:var(--text-3);margin-bottom:5px;">API Key <span style="color:var(--text-3);font-weight:400">(leave blank in dev mode)</span></label>
-    <input id="loginKey" type="password" placeholder="Your Kaliper API key" onkeydown="loginKeydown(event)"
+    <input id="loginKey" type="password" placeholder="Leave blank — not required in dev mode" onkeydown="loginKeydown(event)"
       style="width:100%;padding:9px 11px;border:1px solid var(--border-2);border-radius:var(--radius);font-family:var(--font);font-size:0.85rem;margin-bottom:16px;" />
     <div id="loginError" style="display:none;background:var(--red-l);color:var(--red);border-radius:var(--radius);padding:8px 12px;font-size:0.75rem;margin-bottom:14px;"></div>
     <button id="loginBtn" onclick="doLogin()"
       style="width:100%;padding:10px;background:var(--accent);color:white;border:none;border-radius:var(--radius);font-family:var(--font);font-size:0.85rem;font-weight:600;cursor:pointer;">Sign In</button>
+    <div style="margin-top:12px;font-size:0.68rem;color:var(--text-3);text-align:center;">Running in dev mode — no API key needed</div>
+  </div>
+</div>
+
+<!-- ── NEW RUN MODAL ── -->
+<div class="newrun-overlay" id="newRunOverlay">
+  <div class="newrun-modal">
+    <div class="newrun-title">Start a New Run</div>
+    <div class="newrun-desc">
+      The current run will be saved to Run History. The overview and active state
+      will reset to a clean slate — no data is deleted.
+    </div>
+    <label class="newrun-label" for="newRunLabelInput">Label this run <span style="color:var(--text-3);font-weight:400">(optional but recommended)</span></label>
+    <input class="newrun-input" id="newRunLabelInput" type="text"
+      placeholder="e.g. Ecommerce audit June 2025"
+      onkeydown="if(event.key==='Enter')confirmNewRun();if(event.key==='Escape')closeNewRunModal()" />
+    <div class="newrun-hint">You'll see this label in Run History so you can tell runs apart.</div>
+    <div class="newrun-actions">
+      <button class="newrun-cancel" onclick="closeNewRunModal()">Cancel</button>
+      <button class="newrun-confirm" id="newRunConfirmBtn" onclick="confirmNewRun()">Save &amp; Reset</button>
+    </div>
   </div>
 </div>
 
@@ -494,11 +552,27 @@
   </nav>
   <div class="sidebar-bottom">
     <div class="ws-label">Workspace</div>
-    <select class="ws-select" id="wsSelect" onchange="onWorkspaceChange()">
-      <option value="ecommerce_workspace">ecommerce_workspace</option>
-      <option value="saas_workspace">saas_workspace</option>
-      <option value="content_workspace">content_workspace</option>
+    <select id="wsSelect" class="ws-select" onchange="switchWorkspace(this.value)">
+      <option value="ecommerce_workspace">Ecommerce</option>
+      <option value="saas_workspace">SaaS</option>
+      <option value="content_workspace">Content</option>
     </select>
+    <div class="ws-label" style="margin-top:10px;">Current Run Label</div>
+    <input id="runLabelSidebar" class="ws-select" type="text"
+      placeholder="e.g. SaaS 1, Ecom June…"
+      style="cursor:text;padding:6px 10px;"
+      onchange="saveRunLabel(this.value)"
+      title="Label this run so you can identify it in Run History" />
+    <div id="analysisConfidenceBadge" style="display:none;margin-top:10px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;">
+      <div style="font-size:0.58rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-3);margin-bottom:5px;">Detected Analysis Type</div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span id="analysisDomainLabel" style="font-size:0.8rem;font-weight:700;color:var(--text);text-transform:capitalize;">—</span>
+        <span id="analysisConfidencePill" style="font-size:0.62rem;font-weight:600;padding:2px 7px;border-radius:10px;background:var(--accent-l);color:var(--accent);">—</span>
+      </div>
+      <div id="analysisConfidenceBar" style="height:4px;background:var(--border);border-radius:2px;margin-top:6px;overflow:hidden;">
+        <div id="analysisConfidenceFill" style="height:100%;border-radius:2px;transition:width 0.8s ease;width:0%;background:var(--accent);"></div>
+      </div>
+    </div>
   </div>
 </aside>
 
@@ -511,6 +585,10 @@
   </div>
   <span class="time-badge" id="lastUpdated">—</span>
   <span id="sessionTenantLabel" style="font-size:0.72rem;color:var(--text-3);font-family:var(--mono);"></span>
+  <button onclick="openNewRunModal()" style="display:flex;align-items:center;gap:6px;background:var(--surface);color:var(--text-2);border:1px solid var(--border);padding:7px 14px;border-radius:var(--radius);font-family:var(--font);font-size:0.78rem;font-weight:600;cursor:pointer;" title="Save current run and start fresh">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    New Run
+  </button>
   <button class="refresh-btn" onclick="loadAll()">
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
     Refresh
@@ -903,16 +981,20 @@
   const API = 'http://127.0.0.1:5000';
 
   // ---------------------------------------------------------------------------
-  // Session — tenant identity is resolved at login, not hardcoded
+  // Session — persisted in localStorage so data survives logout and browser close
   // ---------------------------------------------------------------------------
-  let TENANT    = sessionStorage.getItem('kaliper_tenant') || null;
-  let API_KEY   = sessionStorage.getItem('kaliper_api_key') || null;
-  let AUTH_MODE = sessionStorage.getItem('kaliper_auth_mode') || 'dev';
+  let TENANT    = localStorage.getItem('kaliper_tenant') || null;
+  let API_KEY   = localStorage.getItem('kaliper_api_key') || null;
+  let AUTH_MODE = localStorage.getItem('kaliper_auth_mode') || 'dev';
 
-  let WORKSPACE = 'ecommerce_workspace';
+  // Single-workspace system — fixed default
+  let WORKSPACE = localStorage.getItem('kaliper_workspace') || 'ecommerce_workspace';
   let currentPage = 'overview';
   let planVersions = [];
   let selectedVersionId = null;
+  // Pending run label (set via sidebar input, applied to next clear/new-run)
+  let pendingRunLabel = localStorage.getItem('kaliper_run_label') || '';
+
 
   // ---------------------------------------------------------------------------
   // API fetch — attach API key header when we have one
@@ -929,6 +1011,10 @@
   // Login screen
   // ---------------------------------------------------------------------------
   function showLogin(errorMsg) {
+    // Pre-fill tenant field with stored value or the known default
+    const stored = localStorage.getItem('kaliper_tenant') || 'tenant_demo';
+    const tenantInput = document.getElementById('loginTenant');
+    if (tenantInput && !tenantInput.value) tenantInput.value = stored;
     document.getElementById('loginOverlay').style.display = 'flex';
     document.getElementById('appShell').style.display = 'none';
     if (errorMsg) {
@@ -941,6 +1027,12 @@
   function hideLogin() {
     document.getElementById('loginOverlay').style.display = 'none';
     document.getElementById('appShell').style.display = 'flex';
+  }
+
+  function switchWorkspace(newWorkspace) {
+    WORKSPACE = newWorkspace;
+    localStorage.setItem('kaliper_workspace', WORKSPACE);
+    loadAll();
   }
 
   async function doLogin() {
@@ -969,24 +1061,18 @@
         btn.textContent = 'Sign In';
         return;
       }
-      // Persist session
+      // Persist session to localStorage so it survives tab closes and Sign Out
       TENANT    = data.tenant_id;
       API_KEY   = keyInput || null;
       AUTH_MODE = data.auth_mode;
-      sessionStorage.setItem('kaliper_tenant',    TENANT);
-      sessionStorage.setItem('kaliper_api_key',   API_KEY || '');
-      sessionStorage.setItem('kaliper_auth_mode', AUTH_MODE);
-
-      // Populate workspace switcher from login response
-      if (data.workspaces && data.workspaces.length) {
-        const sel = document.getElementById('wsSelect');
-        sel.innerHTML = data.workspaces.map(w =>
-          `<option value="${w.workspace_id}">${w.workspace_id}</option>`
-        ).join('');
-        WORKSPACE = sel.value;
-      }
+      localStorage.setItem('kaliper_tenant',    TENANT);
+      localStorage.setItem('kaliper_api_key',   API_KEY || '');
+      localStorage.setItem('kaliper_auth_mode', AUTH_MODE);
 
       document.getElementById('sessionTenantLabel').textContent = TENANT;
+      // Restore run label sidebar input
+      const rl = document.getElementById('runLabelSidebar');
+      if (rl) rl.value = pendingRunLabel;
       hideLogin();
       loadAll();
     } catch (e) {
@@ -998,9 +1084,8 @@
   }
 
   function doLogout() {
-    sessionStorage.removeItem('kaliper_tenant');
-    sessionStorage.removeItem('kaliper_api_key');
-    sessionStorage.removeItem('kaliper_auth_mode');
+    // In single-customer dev mode we keep localStorage intact so all run data
+    // and workspace selection survive. Only clear the in-memory auth state.
     TENANT = null; API_KEY = null;
     showLogin();
   }
@@ -1012,29 +1097,58 @@
   // Session restore on page load
   // ---------------------------------------------------------------------------
   async function restoreSession() {
-    if (!TENANT) { showLogin(); return; }
-    // Verify the stored session is still valid
+    // In dev mode (single-customer), attempt silent auto-restore without showing
+    // the login screen. Only fall back to the login screen if the server is
+    // unreachable or returns an auth error.
+    const storedTenant = localStorage.getItem('kaliper_tenant') || TENANT;
+    if (!storedTenant) { showLogin(); return; }
     try {
       const headers = {};
-      if (API_KEY) headers['X-Kaliper-API-Key'] = API_KEY;
-      const params = AUTH_MODE === 'dev' ? `?tenant_id=${TENANT}` : '';
+      const storedKey = localStorage.getItem('kaliper_api_key') || '';
+      if (storedKey) headers['X-Kaliper-API-Key'] = storedKey;
+      const storedMode = localStorage.getItem('kaliper_auth_mode') || 'dev';
+      const params = storedMode === 'dev' ? `?tenant_id=${storedTenant}` : '';
       const res  = await fetch(`${API}/auth/me${params}`, { headers });
       const data = await res.json();
       if (!res.ok || !data.success) { showLogin(); return; }
       TENANT    = data.tenant_id;
+      API_KEY   = storedKey || null;
       AUTH_MODE = data.auth_mode;
-      if (data.workspaces && data.workspaces.length) {
-        const sel = document.getElementById('wsSelect');
-        sel.innerHTML = data.workspaces.map(w =>
-          `<option value="${w.workspace_id}">${w.workspace_id}</option>`
-        ).join('');
-        WORKSPACE = sel.value;
-      }
+      localStorage.setItem('kaliper_tenant',    TENANT);
+      localStorage.setItem('kaliper_auth_mode', AUTH_MODE);
       document.getElementById('sessionTenantLabel').textContent = TENANT;
+      // Restore run label sidebar input
+      const rl = document.getElementById('runLabelSidebar');
+      if (rl) rl.value = pendingRunLabel;
       hideLogin();
       loadAll();
-    } catch { showLogin(); }
+    } catch {
+      // Server unreachable — show login so user can retry
+      showLogin();
+    }
   }
+
+  function saveRunLabel(val) {
+    pendingRunLabel = val.trim();
+    localStorage.setItem('kaliper_run_label', pendingRunLabel);
+  }
+
+  function updateAnalysisBadge(domain, confidence) {
+    const badge = document.getElementById('analysisConfidenceBadge');
+    if (!domain || domain === '—') { badge.style.display = 'none'; return; }
+    badge.style.display = 'block';
+    const pct = confidence != null ? Math.round(confidence * 100) : null;
+    document.getElementById('analysisDomainLabel').textContent = domain;
+    if (pct != null) {
+      document.getElementById('analysisConfidencePill').textContent = pct + '%';
+      const col = pct >= 75 ? 'var(--green)' : pct >= 50 ? 'var(--yellow)' : 'var(--orange)';
+      document.getElementById('analysisConfidencePill').style.background = pct >= 75 ? 'var(--green-l)' : pct >= 50 ? 'var(--yellow-l)' : 'var(--orange-l)';
+      document.getElementById('analysisConfidencePill').style.color = col;
+      document.getElementById('analysisConfidenceFill').style.width = pct + '%';
+      document.getElementById('analysisConfidenceFill').style.background = col;
+    }
+  }
+
 
   const PAGE_TITLES = {
     overview: 'Overview', trends: 'Trends', coverage: 'Coverage',
@@ -1043,7 +1157,13 @@
 
   function fmt(ts) {
     if (!ts) return '—';
-    try { return new Date(ts).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }); }
+    try { 
+      let dStr = ts;
+      if (typeof dStr === 'string' && !dStr.includes('T') && !dStr.includes('Z')) {
+        dStr = dStr.replace(' ', 'T') + 'Z';
+      }
+      return new Date(dStr).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }); 
+    }
     catch { return ts; }
   }
   function dur(s, e) {
@@ -1071,10 +1191,24 @@
   }
   function clearError() { document.getElementById('errorBar').style.display = 'none'; }
 
+  function syncNavHighlight(name) {
+    // Update the nav sidebar active item to match the given page name.
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + name + "'")) {
+        n.classList.add('active');
+      }
+    });
+  }
+
   function switchPage(name, evt) {
     currentPage = name;
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    if (evt && evt.currentTarget) evt.currentTarget.classList.add('active');
+    if (evt && evt.currentTarget) {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      evt.currentTarget.classList.add('active');
+    } else {
+      syncNavHighlight(name);
+    }
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('page-' + name).classList.add('active');
     document.getElementById('pageTitle').textContent = PAGE_TITLES[name] || name;
@@ -1088,12 +1222,6 @@
     };
     if (loaders[name]) loaders[name]();
   }
-  function onWorkspaceChange() {
-    WORKSPACE = document.getElementById('wsSelect').value;
-    planVersions = []; selectedVersionId = null;
-    loadAll();
-  }
-
   function drawDonut(counts) {
     const canvas = document.getElementById('donutCanvas');
     const ctx = canvas.getContext('2d');
@@ -1166,7 +1294,7 @@
     svg.innerHTML = html;
   }
 
-  async function loadOverview() {
+  async function loadOverviewData() {
     try {
       // Use raw fetch for plan-active so a 404 (no plan yet) doesn't throw
       const planRes = await fetch(`${API}/plan-active?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`);
@@ -1193,6 +1321,7 @@
       document.getElementById('kpiIssues').style.color = sc.issue_count > 0 ? 'var(--red)' : 'var(--green)';
       document.getElementById('kpiRunId').innerHTML = '#' + (sc.run_id || '—') + (sc.label ? `<br><span style="font-size:12px;color:var(--text-3);font-weight:normal">${sc.label}</span>` : '');
       document.getElementById('kpiDomain').textContent = sc.domain || '—';
+      updateAnalysisBadge(sc.domain, sc.confidence);
       drawDonut(sc.severity_counts || {});
       const types = sc.top_issue_types || [];
       const maxT = Math.max(1, ...types.map(t => t.count));
@@ -1239,7 +1368,7 @@
     }
   }
 
-  async function loadTrends() {
+  async function loadTrendsData() {
     try {
       const [trend, health] = await Promise.all([
         apiFetch(`/trends?tenant_id=${TENANT}&workspace_id=${WORKSPACE}&limit=30`),
@@ -1277,7 +1406,7 @@
     } catch(e) { document.getElementById('trendAvgScore').textContent = '—'; }
   }
 
-  async function loadCoverage() {
+  async function loadCoverageData() {
     const el = document.getElementById('coverageContent');
     try {
       const d = await apiFetch(`/coverage?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`);
@@ -1318,7 +1447,7 @@
     } catch(e) { el.innerHTML = `<div class="empty">Failed: ${e.message}</div>`; }
   }
 
-  async function loadIssues() {
+  async function loadIssuesData() {
     try {
       const data = await apiFetch(`/issues?tenant_id=${TENANT}&workspace_id=${WORKSPACE}&limit=200`);
       document.getElementById('issuesBody').innerHTML = data.length
@@ -1334,7 +1463,7 @@
     } catch { document.getElementById('issuesBody').innerHTML = `<tr><td colspan="6"><div class="empty">Failed</div></td></tr>`; }
   }
 
-  async function loadEvents() {
+  async function loadEventsData() {
     try {
       const data = await apiFetch(`/events?tenant_id=${TENANT}&workspace_id=${WORKSPACE}&limit=100`);
       document.getElementById('eventsBody').innerHTML = data.length
@@ -1349,7 +1478,7 @@
     } catch { document.getElementById('eventsBody').innerHTML = `<tr><td colspan="5"><div class="empty">Failed</div></td></tr>`; }
   }
 
-  async function loadRuns() {
+  async function loadRunsData() {
     try {
       const data = await apiFetch(`/runs?tenant_id=${TENANT}&workspace_id=${WORKSPACE}&limit=30`);
       document.getElementById('runsBody').innerHTML = data.length
@@ -1361,14 +1490,14 @@
               <td style="color:var(--text-2); font-weight:500;">${r.label||'—'}</td>
               <td><span class="chip chip-active">${r.domain||'—'}</span></td>
               <td>${(r.event_count||0).toLocaleString()}</td>
-              <td style="color:${r.issue_count>0?'var(--red)':'var(--green)'};font-weight:600">${(r.issue_count||0).toLocaleString()}</td>
+              <td style="color:${(r.issue_count||0)>0?'var(--red)':'var(--green)'};font-weight:600">${(r.issue_count||0).toLocaleString()}</td>
               <td style="color:${col};font-weight:700">${sc}</td>
               <td style="color:var(--text-3)">${fmt(r.started_at)}</td>
               <td style="color:var(--text-3)">${dur(r.started_at, r.ended_at)}</td>
             </tr>`;
           }).join('')
-        : `<tr><td colspan="7"><div class="empty"><div class="empty-emoji">○</div>No runs yet</div></td></tr>`;
-    } catch { document.getElementById('runsBody').innerHTML = `<tr><td colspan="7"><div class="empty">Failed</div></td></tr>`; }
+        : `<tr><td colspan="8"><div class="empty"><div class="empty-emoji">○</div>No runs yet</div></td></tr>`;
+    } catch { document.getElementById('runsBody').innerHTML = `<tr><td colspan="8"><div class="empty">Failed to load runs</div></td></tr>`; }
   }
 
   async function loadPlan() {
@@ -1470,7 +1599,6 @@
       document.getElementById('planDetailTitle').textContent = `Diff: v#${diff.from_version.id} vs v#${diff.to_version.id}`;
       document.getElementById('planDetailMeta').textContent = `${diff.from_version.event_count} → ${diff.to_version.event_count} events`;
 
-      // Group change messages by event name
       const allChanges = [
         ...(diff.breaking_changes||[]).map(c=>({...c,cls:'change-critical'})),
         ...(diff.modified_events||[]).map(c=>({...c,cls:'change-high'})),
@@ -1485,7 +1613,7 @@
 
       const addedSet   = new Set(diff.added_events||[]);
       const removedSet = new Set(diff.removed_events||[]);
-      const modifiedSet = new Set(Object.keys(changesByEvent).filter(k=>k!=='_'));
+      const modifiedSet = new Set(Object.keys(changesByEvent).filter(k=>k!=='_' && !addedSet.has(k) && !removedSet.has(k)));
       const toEvents   = toData.events||[];
       const fromEvents = fromData.events||[];
       const unchanged  = toEvents.filter(ev=>!addedSet.has(ev.name)&&!modifiedSet.has(ev.name));
@@ -1495,7 +1623,11 @@
         <div class="diff-kpi"><div class="diff-kpi-val" style="color:var(--green)">+${addedSet.size}</div><div class="diff-kpi-lbl">Added</div></div>
         <div class="diff-kpi"><div class="diff-kpi-val" style="color:var(--red)">−${removedSet.size}</div><div class="diff-kpi-lbl">Removed</div></div>
         <div class="diff-kpi"><div class="diff-kpi-val" style="color:var(--orange)">${modifiedSet.size}</div><div class="diff-kpi-lbl">Modified</div></div>
-        <div class="diff-kpi"><div class="diff-kpi-val" style="color:${cCol}">${compat}%</div><div class="diff-kpi-lbl">Compat.</div></div>
+        <div class="diff-kpi">
+          <div class="diff-kpi-val" style="color:${cCol}">${compat}%</div>
+          <div class="diff-kpi-lbl">Compat.</div>
+          <div style="font-size: 0.6rem; color: var(--text-3); margin-top: 4px; text-transform: none; letter-spacing: normal;">compatibility with current active plan</div>
+        </div>
       </div>`;
 
       if (totalChanges === 0) {
@@ -1534,7 +1666,6 @@
         html += `</div>`;
       }
 
-      // Unchanged — collapsed by default
       if (unchanged.length) {
         html += `<div class="diff-unchanged-section">
           <div class="diff-unchanged-label" onclick="this.parentElement.classList.toggle('open')">
@@ -1553,17 +1684,6 @@
 
       body.innerHTML = html;
     } catch(e) { body.innerHTML = `<div class="empty">Diff failed: ${e.message}</div>`; }
-  }
-
-  async function loadWorkspaces() {
-    try {
-      const data = await apiFetch(`/workspaces?tenant_id=${TENANT}`);
-      const sel = document.getElementById('wsSelect');
-      if (data.length > 0) {
-        sel.innerHTML = data.map(w=>`<option value="${w.workspace_id}">${w.workspace_id}</option>`).join('');
-        WORKSPACE = sel.value;
-      }
-    } catch {}
   }
 
   function setMsg(elId, msg, isError) {
@@ -1597,15 +1717,12 @@
   function unlockStep(stepNum) {
     const card = document.getElementById('step' + stepNum + 'Card');
     card.classList.remove('setup-step-locked');
-    // enable all inputs and buttons inside
     card.querySelectorAll('input, button').forEach(el => el.disabled = false);
   }
 
   async function uploadPlan() {
     const fileInput = document.getElementById('planFileInput');
-    const isEcommerce = WORKSPACE === 'ecommerce_workspace';
-    
-    if (!fileInput.files.length && !isEcommerce) {
+    if (!fileInput.files.length) {
       setMsg('planUploadMsg', '⚠ Please select a file first.', true);
       return;
     }
@@ -1613,12 +1730,8 @@
     btn.disabled = true;
     btn.textContent = 'Uploading...';
     setMsg('planUploadMsg', '', false);
-
     const formData = new FormData();
-    if (fileInput.files.length > 0) {
-      formData.append('file', fileInput.files[0]);
-    }
-
+    formData.append('file', fileInput.files[0]);
     try {
       const res = await fetch(`${API}/upload-plan?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`, {
         method: 'POST', body: formData
@@ -1628,6 +1741,9 @@
         markStepDone(1);
         unlockStep(2);
         fileInput.value = '';
+        document.getElementById('fileLabel').textContent = 'Choose file or drag here';
+        document.getElementById('fileDrop').classList.remove('file-drop-chosen');
+        btn.textContent = 'Upload Plan';
       } else {
         setMsg('planUploadMsg', '✗ ' + (res.error || 'Upload failed.'), true);
         btn.disabled = false;
@@ -1643,16 +1759,12 @@
   function selectMode(mode) {
     document.getElementById('modeCardHistorical').classList.toggle('mode-card-selected', mode === 'historical');
     document.getElementById('modeCardLive').classList.toggle('mode-card-selected', mode === 'live');
-    
     document.getElementById('modeHistoricalPanel').style.display = mode === 'historical' ? 'block' : 'none';
     document.getElementById('modeLivePanel').style.display = mode === 'live' ? 'block' : 'none';
-
     document.getElementById('step3HistoricalPanel').style.display = mode === 'historical' ? 'block' : 'none';
     document.getElementById('step3LivePanel').style.display = mode === 'live' ? 'block' : 'none';
-
     document.getElementById('step3Title').textContent = mode === 'historical' ? 'Run Data Ingestion' : 'Monitor Live Events';
     document.getElementById('step3Sub').textContent = mode === 'historical' ? 'Pull your Amplitude data into Kaliper for auditing' : 'Watch your data stream in real time';
-
     if (mode === 'live') {
       const url = `${API}/webhook/segment?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`;
       document.getElementById('webhookUrlDisplay').value = url;
@@ -1683,7 +1795,6 @@
     const btn = document.getElementById('saveConnectorBtn');
     btn.disabled = true;
     btn.textContent = 'Registering...';
-
     try {
       const res = await fetch(`${API}/config/connector?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`, {
         method: 'POST',
@@ -1691,22 +1802,24 @@
         body: JSON.stringify({ api_key, secret_key })
       }).then(r => r.json());
       if (res.success) {
-        setMsg('connectorMsg', '✓ Connector registered.', false);
+        setMsg('connectorMsg', '✓ Amplitude connected successfully.', false);
         markStepDone(2);
         unlockStep(3);
       } else {
         setMsg('connectorMsg', '✗ ' + (res.error || 'Registration failed.'), true);
         btn.disabled = false;
-        btn.textContent = 'Register Connector';
+        btn.textContent = 'Connect Amplitude';
       }
     } catch {
       setMsg('connectorMsg', '✗ Cannot reach server. Is the ingestion server running?', true);
       btn.disabled = false;
-      btn.textContent = 'Register Connector';
+      btn.textContent = 'Connect Amplitude';
     }
   }
 
   let progressInterval = null;
+  let ingestionWorkspace = null;
+
   async function startIngestion() {
     const btn = document.getElementById('startIngestionBtn');
     btn.disabled = true;
@@ -1717,9 +1830,9 @@
     document.getElementById('ingestionBar').style.background = 'var(--accent)';
     document.getElementById('ingestionPct').textContent = '0%';
     setMsg('ingestionMsg', '', false);
-
+    ingestionWorkspace = WORKSPACE;
     try {
-      const res = await fetch(`${API}/trigger-ingestion?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`, {
+      const res = await fetch(`${API}/trigger-ingestion?tenant_id=${TENANT}&workspace_id=${ingestionWorkspace}`, {
         method: 'POST'
       }).then(r => r.json());
       if (res.success) {
@@ -1742,7 +1855,7 @@
 
   async function pollProgress() {
     try {
-      const res = await fetch(`${API}/ingestion-progress?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`).then(r => r.json());
+      const res = await fetch(`${API}/ingestion-progress?tenant_id=${TENANT}&workspace_id=${ingestionWorkspace}`).then(r => r.json());
       if (res.status === 'idle') return;
       const pct = res.total > 0 ? Math.round((res.current / res.total) * 100) : 5;
       document.getElementById('ingestionBar').style.width = pct + '%';
@@ -1803,10 +1916,10 @@
         body: JSON.stringify({ tenant_id: TENANT, workspace_id: WORKSPACE, version_id: versionId })
       }).then(r => r.json());
       if (res.success) {
-        switchPage('overview');
+        switchPage('plan', null);
         loadAll();
       } else {
-        alert("Activation failed: " + res.message);
+        alert('Activation failed: ' + (res.message || res.error));
       }
     } catch(err) {
       alert("Error: " + err.message);
@@ -1814,7 +1927,7 @@
   }
 
   async function clearHistory() {
-    if (!confirm("Are you sure you want to clear all history for " + WORKSPACE + "? This cannot be undone.")) return;
+    if (!confirm("Are you sure you want to clear all history? This cannot be undone.")) return;
     try {
       await fetch(`${API}/clear-history`, {
         method: 'POST',
@@ -1829,21 +1942,17 @@
 
   // ── UPLOAD PAGE: restore state from server on every visit ──
   async function loadUploadPage() {
-    // Reset visual state first so we don't show stale in-memory marks
-    // (the DOM persists across page switches; we re-derive truth from the server)
     [1,2,3].forEach(n => {
       const badge = document.getElementById('step'+n+'Badge');
       badge.textContent = n;
       badge.classList.remove('step-badge-done');
       document.getElementById('step'+n+'Card').classList.remove('setup-step-done');
     });
-    // Re-lock steps 2 & 3
     [2,3].forEach(n => {
       const card = document.getElementById('step'+n+'Card');
       card.classList.add('setup-step-locked');
       card.querySelectorAll('input, button').forEach(el => el.disabled = true);
     });
-    // Reset step 1 body to upload zone (in case it was replaced by a status banner)
     const step1Body = document.getElementById('step1Body');
     if (!step1Body.querySelector('#planFileInput')) {
       step1Body.innerHTML = `
@@ -1856,31 +1965,24 @@
         <button class="btn-accent" id="uploadPlanBtn" style="width:100%;margin-top:10px;" onclick="uploadPlan()" disabled>Upload Plan</button>
         <div id="planUploadMsg" class="setup-msg"></div>`;
     }
-
-    // Check server for active plan
     try {
       const planRes = await fetch(`${API}/plan-active?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`);
       const plan = await planRes.json();
       const hasPlan = planRes.ok && !plan.error;
-
       if (hasPlan) {
-        // Mark step 1 done and show which plan is active
         markStepDone(1);
         const sub = document.querySelector('#step1Card .step-sub');
         if (sub) sub.textContent = `Active: ${plan.version || plan.file_name || ('Plan #' + plan.id)} · ${plan.event_count ?? '?'} events`;
-        // Re-enable upload zone so they can replace the plan
         document.getElementById('uploadPlanBtn').disabled = false;
-        setMsg('planUploadMsg', '✓ A plan is already active for this workspace. Upload a new file to replace it.', false);
+        setMsg('planUploadMsg', '✓ A plan is already active. Upload a new file to replace it.', false);
         unlockStep(2);
       }
-    } catch(e) { /* server not reachable, leave steps as-is */ }
-
-    // Check server for existing connector
+    } catch(e) { /* server not reachable */ }
     try {
       const connRes = await fetch(`${API}/config/connector?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`);
       if (connRes.ok) {
         const conn = await connRes.json();
-        if (conn && (conn.api_key || conn.has_connector)) {
+        if (conn && conn.has_connector) {
           markStepDone(2);
           unlockStep(3);
         }
@@ -1888,17 +1990,102 @@
     } catch(e) { /* ignore */ }
   }
 
+  // ---------------------------------------------------------------------------
+  // New Run modal
+  // ---------------------------------------------------------------------------
+  function openNewRunModal() {
+    const sidebarLabel = document.getElementById('runLabelSidebar')?.value.trim() || '';
+    document.getElementById('newRunLabelInput').value = sidebarLabel;
+    document.getElementById('newRunOverlay').classList.add('active');
+    setTimeout(() => document.getElementById('newRunLabelInput').focus(), 80);
+  }
+  function closeNewRunModal() {
+    document.getElementById('newRunOverlay').classList.remove('active');
+  }
+  async function confirmNewRun() {
+    const label = document.getElementById('newRunLabelInput').value.trim();
+    const btn   = document.getElementById('newRunConfirmBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (API_KEY) headers['X-Kaliper-API-Key'] = API_KEY;
+      const res = await fetch(`${API}/clear`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          tenant_id: TENANT,
+          workspace_id: WORKSPACE,
+          label: label || null,
+        }),
+      });
+      const data = await res.json();
+      closeNewRunModal();
+      if (data.success) {
+        // Clear sidebar run label for the new run
+        pendingRunLabel = '';
+        localStorage.setItem('kaliper_run_label', '');
+        const rl = document.getElementById('runLabelSidebar');
+        if (rl) rl.value = '';
+        // Jump to upload page so they can start a fresh audit cycle
+        switchPage('upload', null);
+      } else {
+        alert('Reset failed: ' + (data.message || 'Unknown error'));
+      }
+    } catch(e) {
+      alert('Cannot reach server: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Save & Reset';
+    }
+  }
+  document.getElementById('newRunOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeNewRunModal();
+  });
+
+  // ---------------------------------------------------------------------------
+  // Smart in-place refresh — updates data without re-rendering entire page DOM.
+  // silentPoll only touches the live data elements; the page structure stays put.
+  // ---------------------------------------------------------------------------
+  const _pageLoaded = {};
+
   function loadAll() {
+    syncNavHighlight(currentPage);
+    _pageLoaded[currentPage] = false;
     loadPage(currentPage);
     document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString('en-IN');
   }
 
+  // Silent background poll — never re-renders chrome/structure
+  function silentPoll() {
+    if (!TENANT) return;
+    document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString('en-IN');
+    const silentLoaders = {
+      overview:  loadOverviewData,
+      trends:    loadTrendsData,
+      coverage:  loadCoverageData,
+      issues:    loadIssuesData,
+      events:    loadEventsData,
+      runs:      loadRunsData,
+    };
+    if (silentLoaders[currentPage]) silentLoaders[currentPage]();
+  }
+
+  async function loadOverview() { await loadOverviewData(); }
+  async function loadTrends()   { await loadTrendsData(); }
+  async function loadCoverage() { await loadCoverageData(); }
+  async function loadIssues()   { await loadIssuesData(); }
+  async function loadEvents()   { await loadEventsData(); }
+  async function loadRuns()     { await loadRunsData(); }
+
+  document.getElementById('wsSelect').value = WORKSPACE;
   restoreSession();
-  setInterval(() => { if (TENANT) loadAll(); }, 30000);
+  setInterval(silentPoll, 30000);
   window.addEventListener('resize', () => {
     if (currentPage === 'overview') loadOverview();
     if (currentPage === 'trends') loadTrends();
   });
+
 </script>
 </body>
 </html>

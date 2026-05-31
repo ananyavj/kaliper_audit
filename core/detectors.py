@@ -21,6 +21,10 @@ DEFAULT_ENABLED_CHECKS = {
     "content_duration_validation",
     # D1: conditional logic check — always on when the plan encodes conditional_rules
     "conditional_property",
+    "empty_products_array",
+    "invalid_product_item",
+    "order_revenue_mismatch",
+    "orphaned_transaction_item",
 }
 
 
@@ -110,6 +114,9 @@ def detect_issues(
     # Tracks event_ids for which wrong_property_type already fired for the revenue
     # property, so invalid_revenue is suppressed for the same event.
     _revenue_type_issued: set[str] = set()
+    # Tracks event_ids for which invalid_currency already fired, so the
+    # enum_value_violation check doesn't double-report the same currency problem.
+    _currency_issued: set[str] = set()
     spec_map = {spec.name: spec for spec in plan_specs}
 
     order_id_prop   = pm.get("order_id_prop", "order_id")
@@ -141,7 +148,9 @@ def detect_issues(
         # If funnel roles are not resolved dynamically, infer them via keywords
         if not fm:
             event_name_lower = event.name.lower().replace("_", " ").replace(" ", "")
-            if "purchase" in event_name_lower or "ordercompleted" in event_name_lower or "orderplaced" in event_name_lower:
+            if "transactionitem" in event_name_lower or ("transaction" in event_name_lower and "item" in event_name_lower):
+                roles.add("transaction_item_event")
+            elif "purchase" in event_name_lower or "ordercompleted" in event_name_lower or "orderplaced" in event_name_lower or "transaction" in event_name_lower:
                 roles.add("purchase_event")
             if "checkoutstart" in event_name_lower or "begincheckout" in event_name_lower:
                 roles.add("checkout_start_event")
@@ -336,6 +345,7 @@ def detect_issues(
                                  f"code (got '{currency}')."),
                         event_id=event.event_id, event_name=event.name,
                     ))
+                    _currency_issued.add(event.event_id)
 
         # --- 4b. Checkout start revenue/currency validation ---
         if "checkout_start_event" in roles and "revenue_currency_validation" in enabled:
@@ -360,10 +370,8 @@ def detect_issues(
                 state.store_checkout_revenue(identity, float(revenue))
 
         # --- 5. Enum / allowed-values violation ---
-        _currency_already_flagged = any(
-            i.event_id == event.event_id and i.issue_type == "invalid_currency"
-            for i in issues
-        )
+        # Use the O(1) set instead of scanning the issues list.
+        _currency_already_flagged = event.event_id in _currency_issued
         if "enum_value_violation" in enabled and spec.allowed_values:
             for prop_name, allowed in spec.allowed_values.items():
                 if not _has_property(event.properties, prop_name) or not allowed:
@@ -592,6 +600,58 @@ def detect_issues(
                             event_name=event.name,
                         ))
 
+        # --- Segment & Snowplow Specific Checks ---
+        products = _get_property(event.properties, "products")
+        if isinstance(products, list):
+            if "empty_products_array" in enabled and len(products) == 0:
+                issues.append(Issue(
+                    issue_type="empty_products_array", severity="high",
+                    message=f"'{event.name}' has an empty 'products' array.",
+                    event_id=event.event_id, event_name=event.name,
+                ))
+
+            if "invalid_product_item" in enabled:
+                has_invalid = False
+                for p in products:
+                    if not isinstance(p, dict):
+                        continue
+                    price = p.get("price")
+                    qty = p.get("quantity", 1)
+                    if price is not None and (not isinstance(price, (int, float)) or price < 0):
+                        has_invalid = True
+                    if not isinstance(qty, (int, float)) or qty <= 0:
+                        has_invalid = True
+                if has_invalid:
+                    issues.append(Issue(
+                        issue_type="invalid_product_item", severity="high",
+                        message=f"'{event.name}' contains products with missing or invalid price/quantity.",
+                        event_id=event.event_id, event_name=event.name,
+                    ))
+
+            if "order_revenue_mismatch" in enabled and "purchase_event" in roles:
+                revenue = _get_property(event.properties, revenue_prop)
+                if _is_positive_number(revenue):
+                    try:
+                        expected_rev = sum(float(p.get("price", 0)) * float(p.get("quantity", 1)) for p in products if isinstance(p, dict))
+                        if abs(float(revenue) - expected_rev) > 0.05:
+                            issues.append(Issue(
+                                issue_type="order_revenue_mismatch", severity="high",
+                                message=f"'{event.name}' revenue ({revenue}) does not match sum of products ({expected_rev}).",
+                                event_id=event.event_id, event_name=event.name,
+                            ))
+                    except (ValueError, TypeError):
+                        pass
+
+        # --- Snowplow Orphaned Transaction Item ---
+        if "transaction_item_event" in roles and "orphaned_transaction_item" in enabled:
+            order_id = _get_property(event.properties, order_id_prop) or _get_property(event.properties, "orderId")
+            if order_id and not state.has_completed_order(str(order_id)):
+                issues.append(Issue(
+                    issue_type="orphaned_transaction_item", severity="high",
+                    message=f"'{event.name}' received for order '{order_id}' but no parent transaction was seen.",
+                    event_id=event.event_id, event_name=event.name,
+                ))
+
         state.mark_event(
             event,
             purchase_roles=roles if "purchase_event" in roles else None,
@@ -599,6 +659,11 @@ def detect_issues(
         )
 
         # --- 7. Sequence validation (evaluated last so semantic checks run first) ---
+        # mark_event() is called BEFORE this block so the current event's name
+        # is in seen_event_names_by_identity — this intentionally allows an event
+        # to satisfy its own allowed_previous_events entry (self-referential funnels
+        # like repeated checkout steps).  If you want strict "must have seen a
+        # *prior* occurrence" semantics, move mark_event() below this block.
         # Suppressed when a semantic ordering check (10/11/13/14/16/17/18/19/20)
         # already fired for this event — same root cause, one signal is enough.
         if "sequence_validation" in enabled and spec.allowed_previous_events \

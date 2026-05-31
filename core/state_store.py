@@ -78,10 +78,17 @@ class StreamState:
         if _is_signup_event(event.name):
             self.signed_up_identities.add(identity)
 
-        if any(s in event.name.lower() for s in ("trial started", "trial_started", "trial start")):
+        if any(s in event.name.lower() for s in (
+            "trial started", "trial_started", "trial start", "trial_start",
+            "free trial started", "free_trial_started", "free trial start",
+        )):
             self.trial_started_identities.add(identity)
 
-        if any(s in event.name.lower() for s in ("subscription started", "subscription_started", "subscription start")):
+        if any(s in event.name.lower() for s in (
+            "subscription started", "subscription_started",
+            "subscription start", "subscription_start",
+            "subscribed", "plan activated", "plan_activated",
+        )):
             self.subscription_started_identities.add(identity)
 
         # Track completed order IDs.

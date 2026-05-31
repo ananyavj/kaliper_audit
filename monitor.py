@@ -1,4 +1,9 @@
 # monitor.py
+# ============================================================
+# DEPRECATED — Early prototype for a continuous monitoring loop.
+# Not imported anywhere, not wired into the dashboard.
+# Kept for reference only.
+# ============================================================
 """
 Kaliper Continuous Monitor  —  Req 10
 ---------------------------------------
@@ -179,6 +184,7 @@ class WorkspaceMonitorThread(threading.Thread):
         self.tenant_id = tenant_id
         self.workspace_id = workspace_id
         self.interval_seconds = max(10, interval_seconds)  # hard floor: 10 s
+        self._requested_interval_seconds = self.interval_seconds  # store for respawn
         self.stop_event = stop_event
         self.run_once = run_once
         self.dry_run = dry_run
@@ -284,7 +290,7 @@ def run_monitor(
                     new_thread = WorkspaceMonitorThread(
                         tenant_id=t.tenant_id,
                         workspace_id=t.workspace_id,
-                        interval_seconds=t.interval_seconds,
+                        interval_seconds=t._requested_interval_seconds,  # already clamped; apply floor once
                         stop_event=t.stop_event,
                         run_once=t.run_once,
                         dry_run=t.dry_run,

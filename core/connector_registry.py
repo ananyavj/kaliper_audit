@@ -9,14 +9,16 @@ from core.storage import get_connection
 
 
 def utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    # Suffix-free UTC format to match storage._utc_now() for consistent
+    # SQLite string-based timestamp ordering.
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")
 
 
 # ---------------------------------------------------------------------------
 # Checkpoint table — tracks incremental sync state per connector
 # ---------------------------------------------------------------------------
 
-DEFAULT_LOOKBACK_HOURS = 720  # how far back to start on a brand-new connector (30 days)
+DEFAULT_LOOKBACK_HOURS = 1440  # how far back to start on a brand-new connector (60 days)
 
 
 def initialize_checkpoint_table() -> None:

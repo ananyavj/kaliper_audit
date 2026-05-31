@@ -358,11 +358,19 @@ def analyze_tracking_plan(specs: list[TrackingEventSpec]) -> PlanProfile:
         ))
 
     if domain == "saas":
-        checks.extend([
+        # login_without_signup may have already been added above via the
+        # funnel_map role-gate (when both login_event and signup_event resolved).
+        # Build from a dict keyed on check key to deduplicate cleanly.
+        _existing_keys = {c.key for c in checks}
+        _saas_checks = [
             CheckItem("login_without_signup",      True, "Login should usually follow signup.",           "high"),
             CheckItem("trial_without_signup",      True, "Trial start should usually follow signup.",     "high"),
             CheckItem("subscription_without_trial",True, "Subscription should usually follow trial.",     "high"),
-        ])
+        ]
+        for _c in _saas_checks:
+            if _c.key not in _existing_keys:
+                checks.append(_c)
+                _existing_keys.add(_c.key)
 
     elif domain == "content":
         checks.extend([

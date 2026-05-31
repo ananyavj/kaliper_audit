@@ -148,6 +148,23 @@ def _load_from_excel(path: Path) -> list[TrackingEventSpec]:
                 t = types_list[i] if i < len(types_list) else "string"
                 property_types[prop] = _type_map.get(t.strip().lower(), "string")
 
+            # Also capture any additional typed properties listed in a separate
+            # "optional properties" or "all properties" column if present.
+            # Previously only required_properties got types; optional-but-typed
+            # properties (e.g. revenue: number) were silently dropped, so
+            # wrong_property_type checks never fired for them.
+            all_props_idx = col_map.get("optional properties") or col_map.get("all properties")
+            if all_props_idx is not None and all_props_idx < len(r):
+                all_props_raw = r[all_props_idx]
+                all_props_list = _split_properties_list(all_props_raw)
+                # Pair with types_list continuing after required_properties entries
+                offset = len(required_properties)
+                for j, prop in enumerate(all_props_list):
+                    if prop and prop not in property_types:
+                        t_idx = offset + j
+                        t = types_list[t_idx] if t_idx < len(types_list) else "string"
+                        property_types[prop] = _type_map.get(t.strip().lower(), "string")
+
             # Identity required
             id_fields_idx = col_map.get("identity fields")
             identity_fields = []

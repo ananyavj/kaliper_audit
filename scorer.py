@@ -66,7 +66,7 @@ def _get_latest_run_row(
             """
             SELECT *
             FROM runs
-            WHERE tenant_id = ? AND workspace_id = ? AND event_count > 0
+            WHERE tenant_id = ? AND workspace_id = ?
             ORDER BY id DESC
             LIMIT 1
             """,
@@ -136,10 +136,18 @@ def _score_from_counts(event_count: int, issue_count: int, severity_counts: dict
 
 
 def _grade_from_score(score: int) -> str:
+    """Map a 0-100 health score to a letter grade.
+
+    GRADE_BANDS is ordered highest-threshold-first and always ends with (0, "F"),
+    so every valid score (0-100) is matched inside the loop.  The explicit
+    fallback below is a safety net in case GRADE_BANDS is ever modified.
+    """
     for threshold, grade in GRADE_BANDS:
         if score >= threshold:
             return grade
-    return "F"
+    # Should never be reached given the (0, "F") sentinel in GRADE_BANDS,
+    # but kept as a hard fallback so the function always returns a string.
+    return "F"  # noqa: SIM116  (intentional safety net, not dead code)
 
 
 def build_scorecard(

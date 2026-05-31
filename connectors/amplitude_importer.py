@@ -38,6 +38,7 @@ from __future__ import annotations
 import argparse
 import base64
 import gzip
+import hashlib
 import io
 import json
 import time
@@ -60,10 +61,10 @@ from core.storage import event_id_exists, get_connection
 
 load_dotenv()
 
-INGEST_URL = "http://127.0.0.1:5000/ingest"
+INGEST_BATCH_URL = "http://127.0.0.1:5000/ingest-batch"
 
-# Amplitude Export API only accepts whole-hour granularity.
-HOUR_STEP = timedelta(hours=1)
+# Fetch in 24-hour chunks to speed up historical ingestion, instead of 1 hour at a time.
+HOUR_STEP = timedelta(hours=24)
 
 # Retry / rate-limit settings
 MAX_RETRIES = 4
@@ -264,12 +265,24 @@ def _normalize(raw: dict[str, Any]) -> dict[str, Any]:
     except (ValueError, TypeError):
         timestamp = raw_time
 
+    # Prefer Amplitude's own UUID; fall back to a deterministic hash so that
+    # re-importing the same event is still idempotent even when uuid is absent.
+    # An empty-string event_id previously bypassed the event_id_exists() dedup
+    # check, allowing duplicate events to accumulate in SQLite.
+    raw_event_id = str(raw.get("uuid") or raw.get("event_id") or "").strip()
+    if raw_event_id:
+        event_id = raw_event_id
+    else:
+        # Build a stable ID from (event_type, device_id, event_time)
+        source_str = f"{raw.get('event_type', '')}|{device_id}|{raw_time}"
+        event_id = "amp-" + hashlib.sha256(source_str.encode()).hexdigest()[:32]
+
     return {
         "name": raw.get("event_type"),
         "user_id": raw.get("user_id"),
         "anonymous_id": str(device_id),
         "timestamp": timestamp,
-        "event_id": str(raw.get("uuid") or raw.get("event_id") or ""),
+        "event_id": event_id,
         "properties": raw.get("event_properties") or {},
     }
 
@@ -278,40 +291,49 @@ def _normalize(raw: dict[str, Any]) -> dict[str, Any]:
 # Send one normalised event to the local ingestion server — with retry
 # ---------------------------------------------------------------------------
 
-def _send(connector: dict[str, Any], event: dict[str, Any]) -> None:
-    envelope = {
-        "tenant_id": connector["tenant_id"],
-        "workspace_id": connector["workspace_id"],
-        "environment": connector["config"].get("environment", "production"),
-        "source": "amplitude",
-        "event": event,
-    }
+def _send_batch(connector: dict[str, Any], events: list[dict[str, Any]]) -> None:
+    if not events:
+        return
+        
+    envelopes = [
+        {
+            "tenant_id": connector["tenant_id"],
+            "workspace_id": connector["workspace_id"],
+            "environment": connector["config"].get("environment", "production"),
+            "source": "amplitude",
+            "event": e,
+        }
+        for e in events
+    ]
 
     wait = RETRY_BASE_WAIT
     for attempt in range(1, MAX_RETRIES + 2):
         try:
-            resp = requests.post(INGEST_URL, json=envelope, timeout=30)
+            resp = requests.post(INGEST_BATCH_URL, json=envelopes, timeout=60)
             if resp.status_code == 200:
                 return
-            raise RuntimeError(
-                f"Ingestion rejected event '{event.get('name')}': "
-                f"{resp.status_code} {resp.text[:200]}"
-            )
-        except requests.exceptions.ConnectionError as exc:
+            if 400 <= resp.status_code < 500:
+                raise RuntimeError(
+                    f"Ingestion rejected batch (client error): "
+                    f"{resp.status_code} {resp.text[:200]}"
+                )
             if attempt > MAX_RETRIES:
                 raise RuntimeError(
-                    f"Ingestion server unreachable after {MAX_RETRIES} retries "
-                    f"for event '{event.get('name')}'"
-                ) from exc
+                    f"Ingestion server error after {MAX_RETRIES} retries for batch: "
+                    f"{resp.status_code} {resp.text[:200]}"
+                )
+            print(f"  [retry {attempt}/{MAX_RETRIES}] ingest {resp.status_code} — waiting {wait:.0f}s")
+            time.sleep(wait)
+            wait *= 2
+        except requests.exceptions.ConnectionError as exc:
+            if attempt > MAX_RETRIES:
+                raise RuntimeError(f"Ingestion server unreachable after {MAX_RETRIES} retries for batch") from exc
             print(f"  [retry {attempt}/{MAX_RETRIES}] ingest connection error — waiting {wait:.0f}s")
             time.sleep(wait)
             wait *= 2
         except requests.exceptions.Timeout as exc:
             if attempt > MAX_RETRIES:
-                raise RuntimeError(
-                    f"Ingestion server timed out after {MAX_RETRIES} retries "
-                    f"for event '{event.get('name')}'"
-                ) from exc
+                raise RuntimeError(f"Ingestion server timed out after {MAX_RETRIES} retries for batch") from exc
             print(f"  [retry {attempt}/{MAX_RETRIES}] ingest timeout — waiting {wait:.0f}s")
             time.sleep(wait)
             wait *= 2
@@ -406,6 +428,11 @@ def run_incremental_import(
     # thousands of unknown_event issues.
     # ------------------------------------------------------------------
     expected_domain = _get_workspace_expected_domain(connector)
+    # probe_slice_start tracks which hour was used for the domain check so the
+    # main import loop can skip re-fetching it (avoids double-billing API quota).
+    probe_slice_start: datetime | None = None
+    probe_cached_events: list[dict[str, Any]] | None = None
+
     if expected_domain and expected_domain != "generic":
         print(f"  Checking domain alignment (expected: {expected_domain})...")
         try:
@@ -430,6 +457,11 @@ def run_incremental_import(
                     print(f"  Domain check passed ({inferred} ✓)")
                 else:
                     print("  Domain check inconclusive (mixed/ambiguous sample) — proceeding.")
+            # Cache the probe results so the main loop can reuse them instead
+            # of issuing a second Export API call for the same hour window.
+            if probe_start >= start_time:
+                probe_slice_start = probe_start
+                probe_cached_events = probe_events
         except RuntimeError:
             raise  # re-raise domain mismatch errors unchanged
         except Exception as probe_err:
@@ -457,7 +489,13 @@ def run_incremental_import(
         slice_end = slice_start + HOUR_STEP
 
         try:
-            raw_events = _fetch_slice(api_key, secret_key, slice_start, slice_end)
+            # Reuse events already fetched during the domain probe to avoid
+            # double-billing the Amplitude Export API for the same hour window.
+            if probe_cached_events is not None and slice_start == probe_slice_start:
+                raw_events = probe_cached_events
+                probe_cached_events = None  # consume the cache; only one reuse
+            else:
+                raw_events = _fetch_slice(api_key, secret_key, slice_start, slice_end)
         except RuntimeError as exc:
             print(f"\n  [error] {exc}")
             print(
@@ -471,6 +509,7 @@ def run_incremental_import(
         slice_sent = 0
         slice_skipped = 0
 
+        events_to_send = []
         for raw in raw_events:
             event = _normalize(raw)
             event_id = event["event_id"]
@@ -483,12 +522,15 @@ def run_incremental_import(
                 slice_skipped += 1
                 continue
 
-            try:
-                _send(connector, event)
-                slice_sent += 1
-            except RuntimeError as exc:
-                print(f"  [warn] {exc} — skipping event")
-                slice_skipped += 1
+            events_to_send.append(event)
+            slice_sent += 1
+
+        try:
+            _send_batch(connector, events_to_send)
+        except RuntimeError as exc:
+            print(f"  [warn] {exc} — skipping batch")
+            slice_skipped += len(events_to_send)
+            slice_sent = 0
 
         total_sent += slice_sent
         total_skipped += slice_skipped

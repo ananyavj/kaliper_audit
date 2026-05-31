@@ -1,4 +1,11 @@
-#main.py
+# main.py
+# ============================================================
+# DEPRECATED — CLI prototype from early development.
+# This file is NOT part of the dashboard flow and is not
+# imported anywhere. It runs batch detection against simulator
+# data without touching SQLite or the ingestion server.
+# Kept for reference only. Do not run alongside the server.
+# ============================================================
 from core.plan_loader import load_tracking_plan
 from core.plan_normalizer import normalize_specs
 from core.plan_analyzer import analyze_tracking_plan

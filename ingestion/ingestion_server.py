@@ -27,7 +27,9 @@ from core.storage import (
     ensure_workspace,
     get_connection,
     store_event,
+    store_events_bulk,
     store_issue,
+    store_issues_bulk,
     start_run,
     finish_run,
 )
@@ -285,20 +287,6 @@ def upload_plan():
     data = request.get_json(silent=True)
 
     try:
-        if not file and not data and workspace_id == "ecommerce_workspace":
-            # Auto-load the default tracking plan if none provided
-            default_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "sample_data", "tracking_plan_ecommerce.json")
-            if os.path.exists(default_path):
-                with open(default_path, "r", encoding="utf-8") as f:
-                    plan_data = json.load(f)
-                registered = register_plan_from_dict(
-                    tenant_id=tenant_id,
-                    workspace_id=workspace_id,
-                    plan_data=plan_data,
-                    make_active=make_active,
-                )
-                return jsonify({"success": True, "plan_version_id": registered.plan_version_id})
-
         if file:
             filename = file.filename.lower()
             if filename.endswith(".json"):
@@ -492,6 +480,103 @@ def ingest(authenticated_tenant_id: str | None = None):
             }
             for i in issues
         ],
+    })
+
+
+@app.route("/ingest-batch", methods=["POST"])
+@require_auth
+def ingest_batch(authenticated_tenant_id: str | None = None):
+    data_list = request.get_json(silent=True)
+    if not isinstance(data_list, list):
+        return jsonify({"success": False, "message": "Expected a JSON list."}), 400
+
+    if not data_list:
+        return jsonify({"success": True, "issues_detected": 0})
+
+    events_to_store = []
+    issues_to_store = []
+    
+    total_issues = 0
+    # Group by workspace_id to minimize loading runtimes
+    runtime = None
+    last_workspace_id = None
+
+    for data in data_list:
+        try:
+            context, event_data, source = _parse_envelope(data)
+
+            if authenticated_tenant_id and context.tenant_id != authenticated_tenant_id:
+                # Just skip invalid ones in a batch
+                continue
+
+            if last_workspace_id != context.workspace_id:
+                _ensure_workspace_records(
+                    tenant_id=context.tenant_id,
+                    workspace_id=context.workspace_id,
+                    tenant_name=context.tenant_name,
+                )
+                runtime = _load_or_refresh_runtime(
+                    tenant_id=context.tenant_id,
+                    workspace_id=context.workspace_id,
+                    environment=context.environment,
+                )
+                last_workspace_id = context.workspace_id
+                
+            event = payload_to_event(event_data)
+        except ValueError:
+            continue
+
+        events_to_store.append({
+            "tenant_id": context.tenant_id,
+            "workspace_id": context.workspace_id,
+            "run_id": runtime["run_id"],
+            "source": source,
+            "name": event.name,
+            "user_id": event.user_id,
+            "anonymous_id": event.anonymous_id,
+            "timestamp": event.timestamp,
+            "event_id": event.event_id,
+            "properties": event.properties,
+            "raw_json": data,
+        })
+
+        issues = detect_issues(
+            [event],
+            runtime["specs"],
+            enabled_checks=runtime["profile"].enabled_checks,
+            state=runtime["state"],
+            funnel_map=runtime["profile"].funnel_map,
+            property_map=runtime["profile"].property_map,
+        )
+        
+        for issue in issues:
+            issues_to_store.append({
+                "tenant_id": context.tenant_id,
+                "workspace_id": context.workspace_id,
+                "run_id": runtime["run_id"],
+                "event_id": issue.event_id,
+                "event_name": issue.event_name,
+                "issue_type": issue.issue_type,
+                "severity": issue.severity,
+                "message": issue.message,
+            })
+            
+        runtime["event_count"] += 1
+        runtime["issue_count"] += len(issues)
+        total_issues += len(issues)
+
+    if events_to_store:
+        store_events_bulk(events_to_store)
+    if issues_to_store:
+        store_issues_bulk(issues_to_store)
+        
+    if runtime:
+        _persist_run_counters(runtime)
+
+    return jsonify({
+        "success": True,
+        "events_processed": len(events_to_store),
+        "issues_detected": total_issues,
     })
 
 
@@ -829,18 +914,43 @@ def trigger_ingestion(authenticated_tenant_id: str | None = None):
     tenant_id, workspace_id = _require_workspace_params()
     if not workspace_id: workspace_id = DEFAULT_CONTEXT.workspace_id
 
+    # Proactively start a run if none is active in memory so the
+    # dashboard can show the run ID while we wait for the first event.
+    environment = DEFAULT_CONTEXT.environment
+    key = _workspace_key(tenant_id, workspace_id, environment)
+    if key not in WORKSPACE_RUNTIMES:
+        try:
+            _load_or_refresh_runtime(tenant_id, workspace_id, environment)
+        except ValueError:
+            pass # No active plan, ignore
+
     import threading
     def bg_task():
         try:
-            # We run it as a script to let scheduler do its thing. 
-            # Alternatively, import run_scheduler
             import sys
             from pathlib import Path
             project_root = str(Path(__file__).resolve().parent.parent)
             if project_root not in sys.path:
                 sys.path.insert(0, project_root)
-            from scheduler import run_scheduler
-            run_scheduler(run_once=True)
+                
+            from core.connector_registry import list_connectors
+            
+            connectors = list_connectors(tenant_id, workspace_id)
+            active_connectors = [c for c in connectors if c["is_active"]]
+            
+            if not active_connectors:
+                print(f"No active connectors for workspace {workspace_id}")
+                from core.progress_store import update_progress
+                update_progress(workspace_id, "done", 1, 1)
+                return
+                
+            for c in active_connectors:
+                if c["connector_type"] == "amplitude":
+                    from connectors.amplitude_importer import run_incremental_import
+                    run_incremental_import(c)
+                elif c["connector_type"] == "mixpanel":
+                    from connectors.mixpanel_importer import run_incremental_import
+                    run_incremental_import(c)
         except Exception as e:
             print(f"Background ingestion failed: {e}")
             from core.progress_store import update_progress
@@ -1095,34 +1205,35 @@ def clear_events(authenticated_tenant_id: str | None = None):
         }), 403
 
     key = _workspace_key(tenant_id, workspace_id, environment)
-    runtime = WORKSPACE_RUNTIMES.get(key)
-
     label = data.get("label")
 
-    if runtime:
-        _finalize_runtime(runtime)
-        runtime["state"] = StreamState()
-        runtime["event_count"] = 0
-        runtime["issue_count"] = 0
-        runtime["run_id"] = start_run(
-            tenant_id=tenant_id,
-            workspace_id=workspace_id,
-            environment=environment,
-            mode=runtime["profile"].domain,
-            domain=runtime["profile"].domain,
-            confidence=runtime["profile"].confidence,
-            plan_version_id=runtime["active_plan_version_id"],
-            label=label,
-        )
-        _persist_run_counters(runtime)
+    if key in WORKSPACE_RUNTIMES:
+        _finalize_runtime(WORKSPACE_RUNTIMES[key])
+        del WORKSPACE_RUNTIMES[key]
+
+    new_run_id = None
+    try:
+        # Proactively load runtime which automatically calls start_run() 
+        # so the dashboard sees the new run ID immediately, even before
+        # events arrive.
+        runtime = _load_or_refresh_runtime(tenant_id, workspace_id, environment)
+        new_run_id = runtime["run_id"]
+        
+        if label:
+            conn = get_connection()
+            conn.execute("UPDATE runs SET label = ? WHERE id = ?", (label, new_run_id))
+            conn.commit()
+            conn.close()
+    except ValueError:
+        pass # No active plan
 
     return jsonify({
         "success": True,
-        "message": "Run finalized and new run started.",
+        "message": "Run finalized and new run started." if new_run_id else "No active plan.",
         "tenant_id": tenant_id,
         "workspace_id": workspace_id,
         "environment": environment,
-        "new_run_id": runtime["run_id"] if runtime else None,
+        "new_run_id": new_run_id,
     })
 
 

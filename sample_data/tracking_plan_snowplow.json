@@ -1,0 +1,98 @@
+{
+  "events": [
+    {
+      "name": "page_view",
+      "required_properties": [
+        "url",
+        "referrer"
+      ],
+      "property_types": {
+        "url": "string",
+        "referrer": "string"
+      },
+      "identity_required": false,
+      "allowed_previous_events": []
+    },
+    {
+      "name": "add_to_cart",
+      "required_properties": [
+        "sku",
+        "name",
+        "unitPrice",
+        "quantity"
+      ],
+      "property_types": {
+        "sku": "string",
+        "name": "string",
+        "unitPrice": "number",
+        "quantity": "number"
+      },
+      "identity_required": true,
+      "allowed_previous_events": [
+        "page_view"
+      ]
+    },
+    {
+      "name": "remove_from_cart",
+      "required_properties": [
+        "sku",
+        "name",
+        "unitPrice",
+        "quantity"
+      ],
+      "property_types": {
+        "sku": "string",
+        "name": "string",
+        "unitPrice": "number",
+        "quantity": "number"
+      },
+      "identity_required": true,
+      "allowed_previous_events": [
+        "add_to_cart",
+        "page_view"
+      ]
+    },
+    {
+      "name": "transaction",
+      "required_properties": [
+        "orderId",
+        "total",
+        "currency",
+        "tax",
+        "shipping"
+      ],
+      "property_types": {
+        "orderId": "string",
+        "total": "number",
+        "currency": "string",
+        "tax": "number",
+        "shipping": "number"
+      },
+      "identity_required": true,
+      "allowed_previous_events": [
+        "add_to_cart"
+      ]
+    },
+    {
+      "name": "transaction_item",
+      "required_properties": [
+        "orderId",
+        "sku",
+        "name",
+        "price",
+        "quantity"
+      ],
+      "property_types": {
+        "orderId": "string",
+        "sku": "string",
+        "name": "string",
+        "price": "number",
+        "quantity": "number"
+      },
+      "identity_required": true,
+      "allowed_previous_events": [
+        "transaction"
+      ]
+    }
+  ]
+}
