@@ -102,6 +102,23 @@ def _get_first_active_amplitude_connector_id() -> Optional[int]:
     return int(row["id"]) if row else None
 
 
+def _get_latest_open_run_id(tenant_id: str, workspace_id: str) -> int | None:
+    conn = get_connection()
+    cur = conn.cursor()
+    row = cur.execute(
+        """
+        SELECT id
+        FROM runs
+        WHERE tenant_id = ? AND workspace_id = ? AND ended_at IS NULL
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (tenant_id, workspace_id),
+    ).fetchone()
+    conn.close()
+    return int(row["id"]) if row else None
+
+
 # ---------------------------------------------------------------------------
 # Export payload decoding
 # ---------------------------------------------------------------------------
@@ -508,13 +525,16 @@ def run_incremental_import(
         total_fetched += len(raw_events)
         slice_sent = 0
         slice_skipped = 0
+        active_run_id = _get_latest_open_run_id(tenant_id, workspace_id)
 
         events_to_send = []
         for raw in raw_events:
             event = _normalize(raw)
             event_id = event["event_id"]
 
-            if event_id and event_id_exists(event_id, tenant_id, workspace_id):
+            if event_id and active_run_id is not None and event_id_exists(
+                event_id, tenant_id, workspace_id, run_id=active_run_id
+            ):
                 slice_skipped += 1
                 continue
 

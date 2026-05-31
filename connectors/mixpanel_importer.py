@@ -78,6 +78,25 @@ RATE_LIMIT_WAIT = 60.0     # fallback if Retry-After header is missing
 EXPORT_URL = "https://data.mixpanel.com/api/2.0/export"
 
 
+def _get_latest_open_run_id(tenant_id: str, workspace_id: str) -> int | None:
+    from core.storage import get_connection
+
+    conn = get_connection()
+    cur = conn.cursor()
+    row = cur.execute(
+        """
+        SELECT id
+        FROM runs
+        WHERE tenant_id = ? AND workspace_id = ? AND ended_at IS NULL
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (tenant_id, workspace_id),
+    ).fetchone()
+    conn.close()
+    return int(row["id"]) if row else None
+
+
 # ---------------------------------------------------------------------------
 # Auth -- Mixpanel uses HTTP Basic Auth with api_secret as the username
 # ---------------------------------------------------------------------------
@@ -391,6 +410,7 @@ def run_incremental_import(
         total_fetched += len(raw_events)
         slice_sent = 0
         slice_skipped = 0
+        active_run_id = _get_latest_open_run_id(tenant_id, workspace_id)
 
         events_to_send = []
         for raw in raw_events:
@@ -403,7 +423,9 @@ def run_incremental_import(
                 continue
 
             # Idempotency check
-            if event_id and event_id_exists(event_id, tenant_id, workspace_id):
+            if event_id and active_run_id is not None and event_id_exists(
+                event_id, tenant_id, workspace_id, run_id=active_run_id
+            ):
                 slice_skipped += 1
                 continue
 

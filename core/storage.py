@@ -376,21 +376,31 @@ def event_id_exists(
     event_id: str,
     tenant_id: str,
     workspace_id: str,
+    run_id: Optional[int] = None,
     db_path: str | Path = DB_PATH,
 ) -> bool:
     """
     Return True if an event with this event_id has already been stored for this
-    tenant+workspace. Used by importers to skip duplicate events.
+    tenant+workspace. When run_id is provided, scope the check to that run so
+    historical events can be re-audited in a new run without being blocked by
+    earlier run history.
     """
     conn = get_connection(db_path)
     cur = conn.cursor()
+    params: list[Any] = [event_id, tenant_id, workspace_id]
+    run_clause = ""
+    if run_id is not None:
+        run_clause = "AND run_id = ?"
+        params.append(run_id)
+
     row = cur.execute(
-        """
+        f"""
         SELECT 1 FROM events
         WHERE event_id = ? AND tenant_id = ? AND workspace_id = ?
+          {run_clause}
         LIMIT 1
         """,
-        (event_id, tenant_id, workspace_id),
+        tuple(params),
     ).fetchone()
     conn.close()
     return row is not None

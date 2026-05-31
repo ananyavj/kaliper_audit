@@ -128,6 +128,14 @@ def _ensure_workspace_records(tenant_id: str, workspace_id: str, tenant_name: st
     ensure_workspace(workspace_id, tenant_id, workspace_name)
 
 
+def _clear_active_connector_checkpoints(tenant_id: str, workspace_id: str) -> None:
+    from core.connector_registry import clear_checkpoint, list_connectors
+
+    for connector in list_connectors(tenant_id=tenant_id, workspace_id=workspace_id):
+        if connector["is_active"]:
+            clear_checkpoint(connector["id"])
+
+
 def _persist_run_counters(runtime: dict[str, Any]) -> None:
     conn = get_connection()
     cur = conn.cursor()
@@ -329,6 +337,7 @@ def upload_plan():
             for k in keys_to_delete:
                 _finalize_runtime(WORKSPACE_RUNTIMES[k])
                 del WORKSPACE_RUNTIMES[k]
+            _clear_active_connector_checkpoints(tenant_id, workspace_id)
 
         return jsonify({
             "success": True,
@@ -379,6 +388,7 @@ def activate_plan(authenticated_tenant_id: str | None = None):
     for k in keys_to_delete:
         _finalize_runtime(WORKSPACE_RUNTIMES[k])
         del WORKSPACE_RUNTIMES[k]
+    _clear_active_connector_checkpoints(tenant_id, workspace_id)
 
     return jsonify({"success": True})
 
@@ -913,6 +923,7 @@ def config_connector(authenticated_tenant_id: str | None = None):
 def trigger_ingestion(authenticated_tenant_id: str | None = None):
     tenant_id, workspace_id = _require_workspace_params()
     if not workspace_id: workspace_id = DEFAULT_CONTEXT.workspace_id
+    reimport_current = request.args.get("reimport_current", "false").lower() == "true"
 
     # Proactively start a run if none is active in memory so the
     # dashboard can show the run ID while we wait for the first event.
@@ -945,6 +956,9 @@ def trigger_ingestion(authenticated_tenant_id: str | None = None):
                 return
                 
             for c in active_connectors:
+                if reimport_current:
+                    from core.connector_registry import clear_checkpoint
+                    clear_checkpoint(c["id"])
                 if c["connector_type"] == "amplitude":
                     from connectors.amplitude_importer import run_incremental_import
                     run_incremental_import(c)

@@ -990,6 +990,7 @@
   // Single-workspace system — fixed default
   let WORKSPACE = localStorage.getItem('kaliper_workspace') || 'ecommerce_workspace';
   let currentPage = 'overview';
+  let currentRunId = null;
   let planVersions = [];
   let selectedVersionId = null;
   // Pending run label (set via sidebar input, applied to next clear/new-run)
@@ -1005,6 +1006,17 @@
     const res = await fetch(API + path, { headers });
     if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
     return res.json();
+  }
+
+  async function getCurrentRunId() {
+    const sc = await apiFetch(`/scorecard?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`);
+    currentRunId = sc.run_id || null;
+    return currentRunId;
+  }
+
+  async function currentRunParam() {
+    const runId = currentRunId || await getCurrentRunId();
+    return runId ? `&run_id=${runId}` : '';
   }
 
   // ---------------------------------------------------------------------------
@@ -1031,6 +1043,7 @@
 
   function switchWorkspace(newWorkspace) {
     WORKSPACE = newWorkspace;
+    currentRunId = null;
     localStorage.setItem('kaliper_workspace', WORKSPACE);
     loadAll();
   }
@@ -1312,6 +1325,7 @@
         apiFetch(`/scorecard?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`),
         apiFetch(`/trends?tenant_id=${TENANT}&workspace_id=${WORKSPACE}&limit=20`).catch(()=>null),
       ]);
+      currentRunId = sc.run_id || null;
       const sColor = scoreColor(sc.health_score||0);
       document.getElementById('kpiScore').textContent = sc.health_score ?? '—';
       document.getElementById('kpiScore').style.color = sColor;
@@ -1409,7 +1423,8 @@
   async function loadCoverageData() {
     const el = document.getElementById('coverageContent');
     try {
-      const d = await apiFetch(`/coverage?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`);
+      const runParam = await currentRunParam();
+      const d = await apiFetch(`/coverage?tenant_id=${TENANT}&workspace_id=${WORKSPACE}${runParam}`);
       if (d.error) { el.innerHTML = `<div class="empty">${d.error}</div>`; return; }
       const pct = d.coverage_pct || 0;
       const pctCol = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--yellow)' : 'var(--red)';
@@ -1449,7 +1464,8 @@
 
   async function loadIssuesData() {
     try {
-      const data = await apiFetch(`/issues?tenant_id=${TENANT}&workspace_id=${WORKSPACE}&limit=200`);
+      const runParam = await currentRunParam();
+      const data = await apiFetch(`/issues?tenant_id=${TENANT}&workspace_id=${WORKSPACE}&limit=200${runParam}`);
       document.getElementById('issuesBody').innerHTML = data.length
         ? data.map(i=>`<tr>
             <td class="td-primary td-mono">${i.event_name||'—'}</td>
@@ -1465,7 +1481,8 @@
 
   async function loadEventsData() {
     try {
-      const data = await apiFetch(`/events?tenant_id=${TENANT}&workspace_id=${WORKSPACE}&limit=100`);
+      const runParam = await currentRunParam();
+      const data = await apiFetch(`/events?tenant_id=${TENANT}&workspace_id=${WORKSPACE}&limit=100${runParam}`);
       document.getElementById('eventsBody').innerHTML = data.length
         ? data.map(e=>`<tr>
             <td class="td-primary td-mono">${e.name||'—'}</td>
@@ -1832,8 +1849,11 @@
     setMsg('ingestionMsg', '', false);
     ingestionWorkspace = WORKSPACE;
     try {
-      const res = await fetch(`${API}/trigger-ingestion?tenant_id=${TENANT}&workspace_id=${ingestionWorkspace}`, {
-        method: 'POST'
+      const headers = {};
+      if (API_KEY) headers['X-Kaliper-API-Key'] = API_KEY;
+      const res = await fetch(`${API}/trigger-ingestion?tenant_id=${TENANT}&workspace_id=${ingestionWorkspace}&reimport_current=true`, {
+        method: 'POST',
+        headers
       }).then(r => r.json());
       if (res.success) {
         document.getElementById('ingestionStatus').textContent = 'Ingestion running...';
@@ -2022,6 +2042,7 @@
       const data = await res.json();
       closeNewRunModal();
       if (data.success) {
+        currentRunId = data.new_run_id || null;
         // Clear sidebar run label for the new run
         pendingRunLabel = '';
         localStorage.setItem('kaliper_run_label', '');
@@ -2050,6 +2071,7 @@
   const _pageLoaded = {};
 
   function loadAll() {
+    currentRunId = null;
     syncNavHighlight(currentPage);
     _pageLoaded[currentPage] = false;
     loadPage(currentPage);
