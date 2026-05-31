@@ -1,0 +1,2189 @@
+{
+  "ecom_happy_path": {
+    "ecom_v1_minimal": {
+      "issue_count": 5,
+      "type_counts": {
+        "unknown_event": 5
+      },
+      "score": 68,
+      "grade": "D",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_standard": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v3_strict": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_no_seq": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    }
+  },
+  "ecom_multi_user_clean": {
+    "ecom_v1_minimal": {
+      "issue_count": 6,
+      "type_counts": {
+        "unknown_event": 6
+      },
+      "score": 64,
+      "grade": "D",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_standard": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v3_strict": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_no_seq": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    }
+  },
+  "ecom_refund_valid": {
+    "ecom_v1_minimal": {
+      "issue_count": 4,
+      "type_counts": {
+        "unknown_event": 4
+      },
+      "score": 74,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_standard": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v3_strict": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_no_seq": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    }
+  },
+  "ecom_coupon_valid": {
+    "ecom_v1_minimal": {
+      "issue_count": 4,
+      "type_counts": {
+        "unknown_event": 4
+      },
+      "score": 74,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_standard": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v3_strict": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_no_seq": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    }
+  },
+  "ecom_identity_stitch": {
+    "ecom_v1_minimal": {
+      "issue_count": 3,
+      "type_counts": {
+        "unknown_event": 3
+      },
+      "score": 79,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_standard": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v3_strict": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_no_seq": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    }
+  },
+  "ecom_purchase_no_checkout": {
+    "ecom_v1_minimal": {
+      "issue_count": 4,
+      "type_counts": {
+        "unknown_event": 3,
+        "purchase_without_checkout": 1
+      },
+      "score": 52,
+      "grade": "F",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_standard": {
+      "issue_count": 2,
+      "type_counts": {
+        "purchase_without_checkout": 1,
+        "sequence_error": 1
+      },
+      "score": 67,
+      "grade": "D",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v3_strict": {
+      "issue_count": 2,
+      "type_counts": {
+        "purchase_without_checkout": 1,
+        "sequence_error": 1
+      },
+      "score": 67,
+      "grade": "D",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_no_seq": {
+      "issue_count": 1,
+      "type_counts": {
+        "purchase_without_checkout": 1
+      },
+      "score": 75,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    }
+  },
+  "ecom_duplicate_purchase": {
+    "ecom_v1_minimal": {
+      "issue_count": 4,
+      "type_counts": {
+        "unknown_event": 3,
+        "duplicate_purchase": 1
+      },
+      "score": 56,
+      "grade": "F",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "duplicate_purchase": 1
+      },
+      "score": 76,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v3_strict": {
+      "issue_count": 1,
+      "type_counts": {
+        "duplicate_purchase": 1
+      },
+      "score": 76,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_no_seq": {
+      "issue_count": 1,
+      "type_counts": {
+        "duplicate_purchase": 1
+      },
+      "score": 76,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    }
+  },
+  "ecom_bad_currency": {
+    "ecom_v1_minimal": {
+      "issue_count": 5,
+      "type_counts": {
+        "unknown_event": 3,
+        "invalid_currency": 2
+      },
+      "score": 55,
+      "grade": "F",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_standard": {
+      "issue_count": 2,
+      "type_counts": {
+        "invalid_currency": 2
+      },
+      "score": 76,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v3_strict": {
+      "issue_count": 2,
+      "type_counts": {
+        "invalid_currency": 2
+      },
+      "score": 76,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_no_seq": {
+      "issue_count": 2,
+      "type_counts": {
+        "invalid_currency": 2
+      },
+      "score": 76,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    }
+  },
+  "ecom_revenue_as_string": {
+    "ecom_v1_minimal": {
+      "issue_count": 7,
+      "type_counts": {
+        "unknown_event": 3,
+        "wrong_property_type": 2,
+        "invalid_revenue": 2
+      },
+      "score": 31,
+      "grade": "F",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_standard": {
+      "issue_count": 4,
+      "type_counts": {
+        "wrong_property_type": 2,
+        "invalid_revenue": 2
+      },
+      "score": 52,
+      "grade": "F",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v3_strict": {
+      "issue_count": 4,
+      "type_counts": {
+        "wrong_property_type": 2,
+        "invalid_revenue": 2
+      },
+      "score": 52,
+      "grade": "F",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_no_seq": {
+      "issue_count": 4,
+      "type_counts": {
+        "wrong_property_type": 2,
+        "invalid_revenue": 2
+      },
+      "score": 52,
+      "grade": "F",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    }
+  },
+  "ecom_missing_currency": {
+    "ecom_v1_minimal": {
+      "issue_count": 4,
+      "type_counts": {
+        "unknown_event": 3,
+        "missing_required_property": 1
+      },
+      "score": 67,
+      "grade": "D",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "missing_required_property": 1
+      },
+      "score": 88,
+      "grade": "B",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v3_strict": {
+      "issue_count": 1,
+      "type_counts": {
+        "missing_required_property": 1
+      },
+      "score": 88,
+      "grade": "B",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_no_seq": {
+      "issue_count": 1,
+      "type_counts": {
+        "missing_required_property": 1
+      },
+      "score": 88,
+      "grade": "B",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    }
+  },
+  "ecom_refund_without_purchase": {
+    "ecom_v1_minimal": {
+      "issue_count": 2,
+      "type_counts": {
+        "unknown_event": 2
+      },
+      "score": 80,
+      "grade": "B",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_standard": {
+      "issue_count": 2,
+      "type_counts": {
+        "sequence_error": 1,
+        "return_without_purchase": 1
+      },
+      "score": 75,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v3_strict": {
+      "issue_count": 2,
+      "type_counts": {
+        "sequence_error": 1,
+        "return_without_purchase": 1
+      },
+      "score": 75,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_no_seq": {
+      "issue_count": 1,
+      "type_counts": {
+        "return_without_purchase": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    }
+  },
+  "ecom_checkout_step_regression": {
+    "ecom_v1_minimal": {
+      "issue_count": 6,
+      "type_counts": {
+        "unknown_event": 6
+      },
+      "score": 62,
+      "grade": "D",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "checkout_step_regression": 1
+      },
+      "score": 89,
+      "grade": "B",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v3_strict": {
+      "issue_count": 1,
+      "type_counts": {
+        "checkout_step_regression": 1
+      },
+      "score": 89,
+      "grade": "B",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_no_seq": {
+      "issue_count": 1,
+      "type_counts": {
+        "checkout_step_regression": 1
+      },
+      "score": 89,
+      "grade": "B",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    }
+  },
+  "ecom_coupon_no_checkout": {
+    "ecom_v1_minimal": {
+      "issue_count": 3,
+      "type_counts": {
+        "unknown_event": 3
+      },
+      "score": 75,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_standard": {
+      "issue_count": 2,
+      "type_counts": {
+        "sequence_error": 1,
+        "coupon_without_checkout": 1
+      },
+      "score": 79,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v3_strict": {
+      "issue_count": 2,
+      "type_counts": {
+        "sequence_error": 1,
+        "coupon_without_checkout": 1
+      },
+      "score": 79,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_no_seq": {
+      "issue_count": 1,
+      "type_counts": {
+        "coupon_without_checkout": 1
+      },
+      "score": 87,
+      "grade": "B",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    }
+  },
+  "ecom_unknown_event": {
+    "ecom_v1_minimal": {
+      "issue_count": 2,
+      "type_counts": {
+        "unknown_event": 2
+      },
+      "score": 80,
+      "grade": "B",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 90,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v3_strict": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 90,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_no_seq": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 90,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    }
+  },
+  "ecom_duplicate_event_id": {
+    "ecom_v1_minimal": {
+      "issue_count": 3,
+      "type_counts": {
+        "unknown_event": 2,
+        "duplicate_event_id": 1
+      },
+      "score": 65,
+      "grade": "D",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "duplicate_event_id": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v3_strict": {
+      "issue_count": 1,
+      "type_counts": {
+        "duplicate_event_id": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_no_seq": {
+      "issue_count": 1,
+      "type_counts": {
+        "duplicate_event_id": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    }
+  },
+  "ecom_zero_revenue": {
+    "ecom_v1_minimal": {
+      "issue_count": 5,
+      "type_counts": {
+        "unknown_event": 3,
+        "invalid_revenue": 2
+      },
+      "score": 55,
+      "grade": "F",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_standard": {
+      "issue_count": 2,
+      "type_counts": {
+        "invalid_revenue": 2
+      },
+      "score": 76,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v3_strict": {
+      "issue_count": 2,
+      "type_counts": {
+        "invalid_revenue": 2
+      },
+      "score": 76,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_no_seq": {
+      "issue_count": 2,
+      "type_counts": {
+        "invalid_revenue": 2
+      },
+      "score": 76,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    }
+  },
+  "ecom_wishlist_no_identity": {
+    "ecom_v1_minimal": {
+      "issue_count": 3,
+      "type_counts": {
+        "unknown_event": 3
+      },
+      "score": 75,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_standard": {
+      "issue_count": 2,
+      "type_counts": {
+        "missing_identity": 1,
+        "wishlist_without_identity": 1
+      },
+      "score": 79,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v3_strict": {
+      "issue_count": 2,
+      "type_counts": {
+        "missing_identity": 1,
+        "wishlist_without_identity": 1
+      },
+      "score": 79,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_no_seq": {
+      "issue_count": 2,
+      "type_counts": {
+        "missing_identity": 1,
+        "wishlist_without_identity": 1
+      },
+      "score": 79,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    }
+  },
+  "ecom_conditional_upi_no_app": {
+    "ecom_v1_minimal": {
+      "issue_count": 3,
+      "type_counts": {
+        "unknown_event": 3
+      },
+      "score": 79,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_standard": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v3_strict": {
+      "issue_count": 1,
+      "type_counts": {
+        "conditional_property_missing": 1
+      },
+      "score": 88,
+      "grade": "B",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_no_seq": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    }
+  },
+  "ecom_conditional_upi_bad_app": {
+    "ecom_v1_minimal": {
+      "issue_count": 3,
+      "type_counts": {
+        "unknown_event": 3
+      },
+      "score": 79,
+      "grade": "C",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_standard": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v3_strict": {
+      "issue_count": 1,
+      "type_counts": {
+        "conditional_enum_violation": 1
+      },
+      "score": 88,
+      "grade": "B",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_no_seq": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    }
+  },
+  "ecom_multi_error_stress": {
+    "ecom_v1_minimal": {
+      "issue_count": 10,
+      "type_counts": {
+        "unknown_event": 5,
+        "wrong_property_type": 1,
+        "invalid_revenue": 2,
+        "invalid_currency": 1,
+        "duplicate_purchase": 1
+      },
+      "score": 0,
+      "grade": "F",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_standard": {
+      "issue_count": 8,
+      "type_counts": {
+        "sequence_error": 1,
+        "coupon_without_checkout": 1,
+        "wrong_property_type": 1,
+        "invalid_revenue": 2,
+        "invalid_currency": 1,
+        "duplicate_purchase": 1,
+        "unknown_event": 1
+      },
+      "score": 7,
+      "grade": "F",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v3_strict": {
+      "issue_count": 8,
+      "type_counts": {
+        "sequence_error": 1,
+        "coupon_without_checkout": 1,
+        "wrong_property_type": 1,
+        "invalid_revenue": 2,
+        "invalid_currency": 1,
+        "duplicate_purchase": 1,
+        "unknown_event": 1
+      },
+      "score": 7,
+      "grade": "F",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    },
+    "ecom_v2_no_seq": {
+      "issue_count": 7,
+      "type_counts": {
+        "coupon_without_checkout": 1,
+        "wrong_property_type": 1,
+        "invalid_revenue": 2,
+        "invalid_currency": 1,
+        "duplicate_purchase": 1,
+        "unknown_event": 1
+      },
+      "score": 14,
+      "grade": "F",
+      "domain": "ecommerce",
+      "unresolved_roles": []
+    }
+  },
+  "saas_happy": {
+    "saas_v1_minimal": {
+      "issue_count": 4,
+      "type_counts": {
+        "unknown_event": 4
+      },
+      "score": 75,
+      "grade": "C",
+      "domain": "saas",
+      "unresolved_roles": [
+        "trial_start_event"
+      ]
+    },
+    "saas_v2_standard": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v3_extended": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v2_mrr_req": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": []
+    }
+  },
+  "saas_cancel_flow": {
+    "saas_v1_minimal": {
+      "issue_count": 2,
+      "type_counts": {
+        "unknown_event": 2
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": [
+        "trial_start_event"
+      ]
+    },
+    "saas_v2_standard": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v3_extended": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v2_mrr_req": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": []
+    }
+  },
+  "saas_multi_user_clean": {
+    "saas_v1_minimal": {
+      "issue_count": 3,
+      "type_counts": {
+        "unknown_event": 2,
+        "enum_value_violation": 1
+      },
+      "score": 75,
+      "grade": "C",
+      "domain": "saas",
+      "unresolved_roles": [
+        "trial_start_event"
+      ]
+    },
+    "saas_v2_standard": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v3_extended": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v2_mrr_req": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": []
+    }
+  },
+  "saas_login_before_signup": {
+    "saas_v1_minimal": {
+      "issue_count": 2,
+      "type_counts": {
+        "sequence_error": 1,
+        "login_without_signup": 1
+      },
+      "score": 75,
+      "grade": "C",
+      "domain": "saas",
+      "unresolved_roles": [
+        "trial_start_event"
+      ]
+    },
+    "saas_v2_standard": {
+      "issue_count": 2,
+      "type_counts": {
+        "sequence_error": 1,
+        "login_without_signup": 1
+      },
+      "score": 75,
+      "grade": "C",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v3_extended": {
+      "issue_count": 2,
+      "type_counts": {
+        "sequence_error": 1,
+        "login_without_signup": 1
+      },
+      "score": 75,
+      "grade": "C",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v2_mrr_req": {
+      "issue_count": 2,
+      "type_counts": {
+        "sequence_error": 1,
+        "login_without_signup": 1
+      },
+      "score": 75,
+      "grade": "C",
+      "domain": "saas",
+      "unresolved_roles": []
+    }
+  },
+  "saas_trial_no_identity": {
+    "saas_v1_minimal": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 90,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": [
+        "trial_start_event"
+      ]
+    },
+    "saas_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "missing_identity": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v3_extended": {
+      "issue_count": 1,
+      "type_counts": {
+        "missing_identity": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v2_mrr_req": {
+      "issue_count": 1,
+      "type_counts": {
+        "missing_identity": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    }
+  },
+  "saas_invalid_plan_enum": {
+    "saas_v1_minimal": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 90,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": [
+        "trial_start_event"
+      ]
+    },
+    "saas_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "enum_value_violation": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v3_extended": {
+      "issue_count": 1,
+      "type_counts": {
+        "enum_value_violation": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v2_mrr_req": {
+      "issue_count": 1,
+      "type_counts": {
+        "enum_value_violation": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    }
+  },
+  "saas_invalid_login_method": {
+    "saas_v1_minimal": {
+      "issue_count": 1,
+      "type_counts": {
+        "enum_value_violation": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": [
+        "trial_start_event"
+      ]
+    },
+    "saas_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "enum_value_violation": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v3_extended": {
+      "issue_count": 1,
+      "type_counts": {
+        "enum_value_violation": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v2_mrr_req": {
+      "issue_count": 1,
+      "type_counts": {
+        "enum_value_violation": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    }
+  },
+  "saas_sub_missing_mrr": {
+    "saas_v1_minimal": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 92,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": [
+        "trial_start_event"
+      ]
+    },
+    "saas_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "missing_required_property": 1
+      },
+      "score": 87,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v3_extended": {
+      "issue_count": 1,
+      "type_counts": {
+        "missing_required_property": 1
+      },
+      "score": 87,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v2_mrr_req": {
+      "issue_count": 1,
+      "type_counts": {
+        "missing_required_property": 1
+      },
+      "score": 87,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    }
+  },
+  "saas_sub_no_trial": {
+    "saas_v1_minimal": {
+      "issue_count": 1,
+      "type_counts": {
+        "subscription_without_trial": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": [
+        "trial_start_event"
+      ]
+    },
+    "saas_v2_standard": {
+      "issue_count": 2,
+      "type_counts": {
+        "sequence_error": 1,
+        "subscription_without_trial": 1
+      },
+      "score": 75,
+      "grade": "C",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v3_extended": {
+      "issue_count": 2,
+      "type_counts": {
+        "sequence_error": 1,
+        "subscription_without_trial": 1
+      },
+      "score": 75,
+      "grade": "C",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v2_mrr_req": {
+      "issue_count": 2,
+      "type_counts": {
+        "sequence_error": 1,
+        "subscription_without_trial": 1
+      },
+      "score": 75,
+      "grade": "C",
+      "domain": "saas",
+      "unresolved_roles": []
+    }
+  },
+  "saas_mrr_as_boolean": {
+    "saas_v1_minimal": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 92,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": [
+        "trial_start_event"
+      ]
+    },
+    "saas_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "wrong_property_type": 1
+      },
+      "score": 87,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v3_extended": {
+      "issue_count": 1,
+      "type_counts": {
+        "wrong_property_type": 1
+      },
+      "score": 87,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v2_mrr_req": {
+      "issue_count": 1,
+      "type_counts": {
+        "wrong_property_type": 1
+      },
+      "score": 87,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    }
+  },
+  "saas_unknown_event": {
+    "saas_v1_minimal": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 90,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": [
+        "trial_start_event"
+      ]
+    },
+    "saas_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 90,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v3_extended": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 90,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v2_mrr_req": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 90,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": []
+    }
+  },
+  "saas_billing_status_invalid": {
+    "saas_v1_minimal": {
+      "issue_count": 2,
+      "type_counts": {
+        "unknown_event": 1,
+        "enum_value_violation": 1
+      },
+      "score": 79,
+      "grade": "C",
+      "domain": "saas",
+      "unresolved_roles": [
+        "trial_start_event"
+      ]
+    },
+    "saas_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "enum_value_violation": 1
+      },
+      "score": 87,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v3_extended": {
+      "issue_count": 1,
+      "type_counts": {
+        "enum_value_violation": 1
+      },
+      "score": 87,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v2_mrr_req": {
+      "issue_count": 1,
+      "type_counts": {
+        "enum_value_violation": 1
+      },
+      "score": 87,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    }
+  },
+  "saas_steps_as_string": {
+    "saas_v1_minimal": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 90,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": [
+        "trial_start_event"
+      ]
+    },
+    "saas_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "wrong_property_type": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v3_extended": {
+      "issue_count": 1,
+      "type_counts": {
+        "wrong_property_type": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v2_mrr_req": {
+      "issue_count": 1,
+      "type_counts": {
+        "wrong_property_type": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": []
+    }
+  },
+  "saas_upgrade_valid": {
+    "saas_v1_minimal": {
+      "issue_count": 2,
+      "type_counts": {
+        "unknown_event": 2
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "saas",
+      "unresolved_roles": [
+        "trial_start_event"
+      ]
+    },
+    "saas_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 93,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v3_extended": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v2_mrr_req": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 93,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": []
+    }
+  },
+  "saas_seat_added_valid": {
+    "saas_v1_minimal": {
+      "issue_count": 3,
+      "type_counts": {
+        "unknown_event": 2,
+        "enum_value_violation": 1
+      },
+      "score": 73,
+      "grade": "C",
+      "domain": "saas",
+      "unresolved_roles": [
+        "trial_start_event"
+      ]
+    },
+    "saas_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 93,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v3_extended": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": []
+    },
+    "saas_v2_mrr_req": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 93,
+      "grade": "A",
+      "domain": "saas",
+      "unresolved_roles": []
+    }
+  },
+  "content_happy": {
+    "content_v1_minimal": {
+      "issue_count": 3,
+      "type_counts": {
+        "unknown_event": 3
+      },
+      "score": 81,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_standard": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v3_extended": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_id_req": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    }
+  },
+  "content_subscription_valid": {
+    "content_v1_minimal": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 90,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_standard": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v3_extended": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_id_req": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    }
+  },
+  "content_search_anon": {
+    "content_v1_minimal": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_standard": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v3_extended": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_id_req": {
+      "issue_count": 2,
+      "type_counts": {
+        "missing_identity": 2
+      },
+      "score": 70,
+      "grade": "C",
+      "domain": "content",
+      "unresolved_roles": []
+    }
+  },
+  "content_multi_reader_clean": {
+    "content_v1_minimal": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_standard": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v3_extended": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_id_req": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    }
+  },
+  "content_comment_flow": {
+    "content_v1_minimal": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 92,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 92,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v3_extended": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_id_req": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 92,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    }
+  },
+  "content_newsletter_valid": {
+    "content_v1_minimal": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v3_extended": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_id_req": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    }
+  },
+  "content_article_before_page": {
+    "content_v1_minimal": {
+      "issue_count": 2,
+      "type_counts": {
+        "sequence_error": 1,
+        "article_read_without_page_view": 1
+      },
+      "score": 80,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_standard": {
+      "issue_count": 2,
+      "type_counts": {
+        "sequence_error": 1,
+        "article_read_without_page_view": 1
+      },
+      "score": 80,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v3_extended": {
+      "issue_count": 2,
+      "type_counts": {
+        "sequence_error": 1,
+        "article_read_without_page_view": 1
+      },
+      "score": 80,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_id_req": {
+      "issue_count": 2,
+      "type_counts": {
+        "sequence_error": 1,
+        "article_read_without_page_view": 1
+      },
+      "score": 80,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    }
+  },
+  "content_video_no_start": {
+    "content_v1_minimal": {
+      "issue_count": 2,
+      "type_counts": {
+        "sequence_error": 1,
+        "video_complete_without_video_start": 1
+      },
+      "score": 80,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_standard": {
+      "issue_count": 2,
+      "type_counts": {
+        "sequence_error": 1,
+        "video_complete_without_video_start": 1
+      },
+      "score": 80,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v3_extended": {
+      "issue_count": 2,
+      "type_counts": {
+        "sequence_error": 1,
+        "video_complete_without_video_start": 1
+      },
+      "score": 80,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_id_req": {
+      "issue_count": 2,
+      "type_counts": {
+        "sequence_error": 1,
+        "video_complete_without_video_start": 1
+      },
+      "score": 80,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    }
+  },
+  "content_bad_share_channel": {
+    "content_v1_minimal": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 92,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "enum_value_violation": 1
+      },
+      "score": 87,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v3_extended": {
+      "issue_count": 1,
+      "type_counts": {
+        "enum_value_violation": 1
+      },
+      "score": 87,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_id_req": {
+      "issue_count": 1,
+      "type_counts": {
+        "enum_value_violation": 1
+      },
+      "score": 87,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    }
+  },
+  "content_duration_string": {
+    "content_v1_minimal": {
+      "issue_count": 2,
+      "type_counts": {
+        "wrong_property_type": 1,
+        "content_duration_validation": 1
+      },
+      "score": 75,
+      "grade": "C",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_standard": {
+      "issue_count": 2,
+      "type_counts": {
+        "wrong_property_type": 1,
+        "content_duration_validation": 1
+      },
+      "score": 75,
+      "grade": "C",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v3_extended": {
+      "issue_count": 2,
+      "type_counts": {
+        "wrong_property_type": 1,
+        "content_duration_validation": 1
+      },
+      "score": 75,
+      "grade": "C",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_id_req": {
+      "issue_count": 2,
+      "type_counts": {
+        "wrong_property_type": 1,
+        "content_duration_validation": 1
+      },
+      "score": 75,
+      "grade": "C",
+      "domain": "content",
+      "unresolved_roles": []
+    }
+  },
+  "content_missing_scroll_depth": {
+    "content_v1_minimal": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "missing_required_property": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v3_extended": {
+      "issue_count": 1,
+      "type_counts": {
+        "missing_required_property": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_id_req": {
+      "issue_count": 1,
+      "type_counts": {
+        "missing_required_property": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    }
+  },
+  "content_bad_bookmark_type": {
+    "content_v1_minimal": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 90,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "enum_value_violation": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v3_extended": {
+      "issue_count": 1,
+      "type_counts": {
+        "enum_value_violation": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_id_req": {
+      "issue_count": 1,
+      "type_counts": {
+        "enum_value_violation": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    }
+  },
+  "content_invalid_sub_plan": {
+    "content_v1_minimal": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 90,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "enum_value_violation": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v3_extended": {
+      "issue_count": 1,
+      "type_counts": {
+        "enum_value_violation": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_id_req": {
+      "issue_count": 1,
+      "type_counts": {
+        "enum_value_violation": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    }
+  },
+  "content_negative_duration": {
+    "content_v1_minimal": {
+      "issue_count": 1,
+      "type_counts": {
+        "content_duration_validation": 1
+      },
+      "score": 90,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "content_duration_validation": 1
+      },
+      "score": 90,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v3_extended": {
+      "issue_count": 1,
+      "type_counts": {
+        "content_duration_validation": 1
+      },
+      "score": 90,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_id_req": {
+      "issue_count": 1,
+      "type_counts": {
+        "content_duration_validation": 1
+      },
+      "score": 90,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    }
+  },
+  "content_video_duration_string": {
+    "content_v1_minimal": {
+      "issue_count": 4,
+      "type_counts": {
+        "wrong_property_type": 2,
+        "content_duration_validation": 2
+      },
+      "score": 57,
+      "grade": "F",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_standard": {
+      "issue_count": 4,
+      "type_counts": {
+        "wrong_property_type": 2,
+        "content_duration_validation": 2
+      },
+      "score": 57,
+      "grade": "F",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v3_extended": {
+      "issue_count": 4,
+      "type_counts": {
+        "wrong_property_type": 2,
+        "content_duration_validation": 2
+      },
+      "score": 57,
+      "grade": "F",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_id_req": {
+      "issue_count": 4,
+      "type_counts": {
+        "wrong_property_type": 2,
+        "content_duration_validation": 2
+      },
+      "score": 57,
+      "grade": "F",
+      "domain": "content",
+      "unresolved_roles": []
+    }
+  },
+  "content_missing_identity": {
+    "content_v1_minimal": {
+      "issue_count": 0,
+      "type_counts": {},
+      "score": 100,
+      "grade": "A",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "missing_identity": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v3_extended": {
+      "issue_count": 1,
+      "type_counts": {
+        "missing_identity": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_id_req": {
+      "issue_count": 2,
+      "type_counts": {
+        "missing_identity": 2
+      },
+      "score": 70,
+      "grade": "C",
+      "domain": "content",
+      "unresolved_roles": []
+    }
+  },
+  "content_newsletter_bad_freq": {
+    "content_v1_minimal": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_standard": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v3_extended": {
+      "issue_count": 1,
+      "type_counts": {
+        "enum_value_violation": 1
+      },
+      "score": 80,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    },
+    "content_v2_id_req": {
+      "issue_count": 1,
+      "type_counts": {
+        "unknown_event": 1
+      },
+      "score": 85,
+      "grade": "B",
+      "domain": "content",
+      "unresolved_roles": []
+    }
+  }
+}

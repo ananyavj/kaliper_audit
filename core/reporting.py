@@ -53,7 +53,7 @@ def get_run_history(
     """
     runs = _rows(
         """
-        SELECT id, mode, domain, confidence, plan_version_id,
+        SELECT id, mode, domain, confidence, plan_version_id, label,
                started_at, ended_at, event_count, issue_count
         FROM runs
         WHERE tenant_id = ? AND workspace_id = ? AND event_count > 0
@@ -308,7 +308,8 @@ def get_tracking_coverage(
         f"SELECT DISTINCT name FROM events WHERE {base_where}",
         tuple(params),
     )
-    seen_event_names = {r["name"] for r in seen_rows}
+    from core.plan_normalizer import normalize_incoming_event_name
+    seen_event_names = {normalize_incoming_event_name(r["name"]) for r in seen_rows}
 
     covered = sorted(plan_event_names & seen_event_names)
     missing = sorted(plan_event_names - seen_event_names)

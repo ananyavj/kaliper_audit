@@ -321,6 +321,60 @@ def _send(connector: dict[str, Any], event: dict[str, Any]) -> None:
 # Main incremental sync logic
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Domain sanity check — detect wrong Amplitude project before mass-importing
+# ---------------------------------------------------------------------------
+
+# Event name substrings that are strong signals for each domain.
+# Used to cheaply classify a sample of events without loading the full plan.
+_DOMAIN_SIGNALS: dict[str, list[str]] = {
+    "ecommerce": ["cart", "checkout", "product", "order", "purchase", "payment", "sku"],
+    "saas":      ["signup", "sign_up", "trial", "subscription", "billing", "onboard"],
+    "content":   ["play", "episode", "watch", "stream", "video", "article", "paywall",
+                  "content", "ad_impression", "ad_skip", "trailer"],
+}
+
+
+def _infer_domain_from_sample(events: list[dict[str, Any]]) -> str | None:
+    """
+    Look at up to 50 event names and return the most likely domain, or None
+    if the sample is too small / ambiguous to be confident.
+    """
+    counts: dict[str, int] = {d: 0 for d in _DOMAIN_SIGNALS}
+    sample = [e.get("event_type", "").lower() for e in events[:50]]
+
+    for name in sample:
+        for domain, keywords in _DOMAIN_SIGNALS.items():
+            if any(kw in name for kw in keywords):
+                counts[domain] += 1
+
+    total = sum(counts.values())
+    if total == 0:
+        return None
+
+    top_domain = max(counts, key=counts.__getitem__)
+    top_ratio  = counts[top_domain] / total
+
+    # Only confident if >60% of matched signals point the same way
+    return top_domain if top_ratio >= 0.6 else None
+
+
+def _get_workspace_expected_domain(connector: dict[str, Any]) -> str | None:
+    """
+    Return the domain of the active plan for this workspace, or None if
+    no plan is registered yet.
+    """
+    try:
+        from core.plan_registry import get_active_plan_version
+        active = get_active_plan_version(
+            tenant_id=connector["tenant_id"],
+            workspace_id=connector["workspace_id"],
+        )
+        return active["domain"] if active else None
+    except Exception:
+        return None
+
+
 def run_incremental_import(
     connector: dict[str, Any],
     lookback_hours: int | None = None,
@@ -344,6 +398,44 @@ def run_incremental_import(
         print(f"Connector {connector_id}: checkpoint is current, nothing to import.")
         return
 
+    # ------------------------------------------------------------------
+    # Domain sanity check: fetch one hour of events and verify they look
+    # like they belong to this workspace's plan domain.  If the inferred
+    # domain disagrees with the expected one we abort immediately with a
+    # clear message rather than silently poisoning the workspace with
+    # thousands of unknown_event issues.
+    # ------------------------------------------------------------------
+    expected_domain = _get_workspace_expected_domain(connector)
+    if expected_domain and expected_domain != "generic":
+        print(f"  Checking domain alignment (expected: {expected_domain})...")
+        try:
+            probe_start = end_time - timedelta(hours=1)
+            probe_events = _fetch_slice(api_key, secret_key, probe_start, end_time)
+            if probe_events:
+                inferred = _infer_domain_from_sample(probe_events)
+                if inferred is not None and inferred != expected_domain:
+                    raise RuntimeError(
+                        f"DOMAIN MISMATCH — workspace '{workspace_id}' expects "
+                        f"'{expected_domain}' events but the Amplitude project is "
+                        f"returning '{inferred}' events (sample of "
+                        f"{min(len(probe_events), 50)} events checked).\n"
+                        f"  This means the connector is pointing at the WRONG "
+                        f"Amplitude project.\n"
+                        f"  Fix: update AMPLITUDE_API_KEY_{workspace_id.upper()} "
+                        f"and AMPLITUDE_SECRET_KEY_{workspace_id.upper()} in .env,\n"
+                        f"  then run: python register_amplitude_connector.py "
+                        f"--workspace {workspace_id} --force"
+                    )
+                if inferred is not None:
+                    print(f"  Domain check passed ({inferred} ✓)")
+                else:
+                    print("  Domain check inconclusive (mixed/ambiguous sample) — proceeding.")
+        except RuntimeError:
+            raise  # re-raise domain mismatch errors unchanged
+        except Exception as probe_err:
+            print(f"  [warn] Domain probe failed ({probe_err}) — proceeding without check.")
+    
+    from core.progress_store import update_progress
     total_hours = int((end_time - start_time).total_seconds() // 3600)
     print(f"\nConnector {connector_id} ({connector['connector_name']}) — incremental import")
     print(f"  Tenant    : {tenant_id}")
@@ -358,6 +450,9 @@ def run_incremental_import(
     last_safe_checkpoint = start_time
 
     slice_start = start_time
+    hours_done = 0
+    update_progress(workspace_id, "running", hours_done, total_hours)
+    
     while slice_start < end_time:
         slice_end = slice_start + HOUR_STEP
 
@@ -369,6 +464,7 @@ def run_incremental_import(
                 f"  Stopped at {slice_start.isoformat()}. "
                 f"Checkpoint NOT advanced past {last_safe_checkpoint.isoformat()}."
             )
+            update_progress(workspace_id, "error", hours_done, total_hours)
             break
 
         total_fetched += len(raw_events)
@@ -408,6 +504,11 @@ def run_incremental_import(
         )
 
         slice_start = slice_end
+        hours_done += 1
+        update_progress(workspace_id, "running", hours_done, total_hours)
+
+    if slice_start >= end_time:
+        update_progress(workspace_id, "done", total_hours, total_hours)
 
     print(f"\nDone.")
     print(f"  Total fetched : {total_fetched}")

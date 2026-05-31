@@ -51,6 +51,7 @@ def initialize_db(db_path: str | Path = DB_PATH) -> None:
             domain TEXT NOT NULL,
             confidence REAL NOT NULL,
             plan_version_id INTEGER,
+            label TEXT,
             started_at TEXT NOT NULL,
             ended_at TEXT,
             event_count INTEGER DEFAULT 0,
@@ -156,6 +157,7 @@ def start_run(
     domain: str,
     confidence: float,
     plan_version_id: Optional[int] = None,
+    label: Optional[str] = None,
     db_path: str | Path = DB_PATH,
 ) -> int:
     conn = get_connection(db_path)
@@ -165,9 +167,9 @@ def start_run(
         """
         INSERT INTO runs (
             tenant_id, workspace_id, environment, mode, domain, confidence,
-            plan_version_id, started_at, event_count, issue_count
+            plan_version_id, label, started_at, event_count, issue_count
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)
         """,
         (
             tenant_id,
@@ -177,6 +179,7 @@ def start_run(
             domain,
             confidence,
             plan_version_id,
+            label,
             _utc_now(),
         ),
     )
@@ -354,3 +357,77 @@ def store_plan_version(
     conn.commit()
     conn.close()
     return version_id
+
+
+def clear_workspace_history(
+    tenant_id: str,
+    workspace_id: str,
+    db_path: str | Path = DB_PATH,
+) -> None:
+    """Deletes all runs, events, and issues for a specific workspace."""
+    conn = get_connection(db_path)
+    cur = conn.cursor()
+
+    cur.execute(
+        "DELETE FROM issues WHERE tenant_id = ? AND workspace_id = ?",
+        (tenant_id, workspace_id),
+    )
+    cur.execute(
+        "DELETE FROM events WHERE tenant_id = ? AND workspace_id = ?",
+        (tenant_id, workspace_id),
+    )
+    cur.execute(
+        "DELETE FROM runs WHERE tenant_id = ? AND workspace_id = ?",
+        (tenant_id, workspace_id),
+    )
+
+    conn.commit()
+    conn.close()
+
+
+def auto_close_idle_runs(
+    idle_minutes: int = 15,
+    db_path: str | Path = DB_PATH,
+) -> int:
+    """
+    Closes runs that have been idle (no events received) for more than `idle_minutes`.
+    Returns the number of runs closed.
+    """
+    from datetime import timedelta
+    cutoff_dt = datetime.now(timezone.utc) - timedelta(minutes=idle_minutes)
+    cutoff_str = cutoff_dt.isoformat()
+
+    conn = get_connection(db_path)
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        UPDATE runs
+        SET ended_at = (
+            SELECT MAX(created_at) FROM events WHERE events.run_id = runs.id
+        )
+        WHERE ended_at IS NULL
+          AND (
+              SELECT MAX(created_at) FROM events WHERE events.run_id = runs.id
+          ) < ?
+        """,
+        (cutoff_str,)
+    )
+    closed_with_events = cur.rowcount
+
+    cur.execute(
+        """
+        UPDATE runs
+        SET ended_at = ?
+        WHERE ended_at IS NULL
+          AND event_count = 0
+          AND started_at < ?
+        """,
+        (_utc_now(), cutoff_str)
+    )
+    closed_without_events = cur.rowcount
+
+    conn.commit()
+    conn.close()
+
+    return max(0, closed_with_events) + max(0, closed_without_events)

@@ -84,6 +84,8 @@ def main():
         specs,
         enabled_checks=profile.enabled_checks,
         state=clean_state,
+        funnel_map=profile.funnel_map,
+        property_map=profile.property_map,
     )
 
     error_issues = detect_issues(
@@ -91,6 +93,8 @@ def main():
         specs,
         enabled_checks=profile.enabled_checks,
         state=error_state,
+        funnel_map=profile.funnel_map,
+        property_map=profile.property_map,
     )
 
     print("\nSIGNALS:")

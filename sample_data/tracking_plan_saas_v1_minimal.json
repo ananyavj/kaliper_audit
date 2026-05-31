@@ -1,0 +1,31 @@
+{
+  "events": [
+    {
+      "name": "Signup",
+      "required_properties": ["account_id", "plan", "signup_method"],
+      "property_types": { "account_id": "string", "plan": "string", "signup_method": "string" },
+      "identity_required": true,
+      "allowed_previous_events": [],
+      "allowed_values": { "plan": ["free"] }
+    },
+    {
+      "name": "Login",
+      "required_properties": ["method"],
+      "property_types": { "method": "string" },
+      "identity_required": true,
+      "allowed_previous_events": ["Signup"],
+      "allowed_values": { "method": ["password", "google", "github"] }
+    },
+    {
+      "name": "Subscription Started",
+      "required_properties": ["subscription_id", "plan", "billing_status"],
+      "property_types": { "subscription_id": "string", "plan": "string", "billing_status": "string" },
+      "identity_required": true,
+      "allowed_previous_events": ["Signup"],
+      "allowed_values": {
+        "plan": ["starter", "pro"],
+        "billing_status": ["active", "cancelled"]
+      }
+    }
+  ]
+}

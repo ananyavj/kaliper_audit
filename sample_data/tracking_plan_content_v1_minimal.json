@@ -1,0 +1,39 @@
+{
+  "events": [
+    {
+      "name": "Page Viewed",
+      "required_properties": ["page_url", "session_id"],
+      "property_types": { "page_url": "string", "session_id": "string" },
+      "identity_required": false,
+      "allowed_previous_events": []
+    },
+    {
+      "name": "Article Read",
+      "required_properties": ["article_id", "title", "duration_seconds"],
+      "property_types": { "article_id": "string", "title": "string", "duration_seconds": "number" },
+      "identity_required": false,
+      "allowed_previous_events": ["Page Viewed"]
+    },
+    {
+      "name": "Video Started",
+      "required_properties": ["video_id", "title", "duration_seconds"],
+      "property_types": { "video_id": "string", "title": "string", "duration_seconds": "number" },
+      "identity_required": false,
+      "allowed_previous_events": ["Page Viewed"]
+    },
+    {
+      "name": "Video Completed",
+      "required_properties": ["video_id", "duration_seconds"],
+      "property_types": { "video_id": "string", "duration_seconds": "number" },
+      "identity_required": false,
+      "allowed_previous_events": ["Video Started"]
+    },
+    {
+      "name": "Search Performed",
+      "required_properties": ["query", "result_count"],
+      "property_types": { "query": "string", "result_count": "number" },
+      "identity_required": false,
+      "allowed_previous_events": []
+    }
+  ]
+}

@@ -362,7 +362,7 @@ def run(vertical: str, total_sessions: int) -> None:
 
     generator = VERTICAL_GENERATORS[vertical]
 
-    print(f"\nKaliper Bulk Simulator")
+    print("\nKaliper Bulk Simulator")
     print(f"  Vertical   : {vertical}")
     print(f"  Sessions   : {total_sessions:,}")
     print(f"  Error rate : {int(ERROR_RATE * 100)}%")

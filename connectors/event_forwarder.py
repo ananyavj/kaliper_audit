@@ -24,7 +24,10 @@ except ImportError:
 
 
 Mode = Literal["ecommerce", "saas", "content"]
-FlowName = Literal["clean", "error"]
+FlowName = Literal["clean", "error", "all"]
+
+from dotenv import load_dotenv
+load_dotenv()
 
 LOCAL_INGEST_URL = os.getenv("KALIPER_LOCAL_INGEST_URL", "http://127.0.0.1:5000/ingest")
 DESTINATIONS = {
@@ -165,8 +168,14 @@ def get_mixpanel_forwarder() -> MixpanelForwarder | None:
 
 
 def main() -> None:
-    simulator = _pick_simulator(MODE, FLOW)
-    events = simulator()
+    events = []
+    if FLOW in ("clean", "all"):
+        events.extend(_pick_simulator(MODE, "clean")())
+    if FLOW in ("error", "all"):
+        events.extend(_pick_simulator(MODE, "error")())
+    
+    # Optional: Sort them by timestamp if combining both, though it's simulated data
+    events.sort(key=lambda e: e.timestamp)
 
     mixpanel_forwarder = None
     if "mixpanel" in DESTINATIONS:

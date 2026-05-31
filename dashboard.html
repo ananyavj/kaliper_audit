@@ -38,6 +38,22 @@
     html { font-size: 14px; scroll-behavior: smooth; }
     body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; overflow-x: hidden; }
 
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(10, 15, 30, 0.6);
+      display: none; align-items: center; justify-content: center;
+      z-index: 1000; backdrop-filter: blur(4px);
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--surface); border-radius: var(--radius-lg);
+      width: 400px; padding: 24px 28px; box-shadow: var(--shadow-md);
+    }
+    .modal-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+    .modal-desc { font-size: 0.82rem; color: var(--text-2); margin-bottom: 20px; line-height: 1.4; }
+    .modal-file { margin-bottom: 20px; }
+
     /* ── SIDEBAR ── */
     .sidebar {
       position: fixed; left: 0; top: 0; bottom: 0; width: 220px;
@@ -74,6 +90,51 @@
     .nav-item.active { background: var(--accent-l); color: var(--accent); font-weight: 600; }
     .nav-icon { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.7; }
     .nav-item.active .nav-icon { opacity: 1; }
+
+    /* ── SETUP STEPS ── */
+    .setup-step {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); margin-bottom: 12px;
+      transition: all 0.2s;
+    }
+    .setup-step-locked { opacity: 0.5; pointer-events: none; }
+    .setup-step-done { border-color: var(--green); }
+    .setup-step-header {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 20px;
+    }
+    .setup-step-body { padding: 0 20px 20px; }
+    .step-badge {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--accent-l); color: var(--accent);
+      font-weight: 700; font-size: 0.8rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all 0.2s;
+    }
+    .step-badge-done { background: var(--green-l); color: var(--green); }
+    .step-title { font-weight: 600; font-size: 0.9rem; color: var(--text); }
+    .step-sub { font-size: 0.72rem; color: var(--text-3); margin-top: 2px; }
+    .file-drop {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 6px;
+      border: 1.5px dashed var(--border-2); border-radius: var(--radius);
+      padding: 20px; cursor: pointer; transition: all 0.15s;
+      color: var(--text-2); font-size: 0.8rem; text-align: center;
+    }
+    .file-drop:hover { border-color: var(--accent); background: var(--accent-l); }
+    .file-drop-chosen { border-color: var(--accent); border-style: solid; background: var(--accent-l); }
+    .field-label { display: block; font-size: 0.72rem; color: var(--text-3); margin-bottom: 5px; }
+    .setup-input {
+      width: 100%; padding: 9px 11px;
+      border: 1px solid var(--border-2); border-radius: var(--radius);
+      font-family: var(--font); font-size: 0.85rem;
+      color: var(--text); background: var(--surface);
+    }
+    .setup-input:disabled { background: var(--bg); color: var(--text-3); }
+    .setup-msg {
+      font-size: 0.78rem; margin-top: 10px; min-height: 18px;
+      font-weight: 500;
+    }
 
     .sidebar-bottom {
       padding: 12px 10px; border-top: 1px solid var(--border);
@@ -290,6 +351,40 @@
     .change-high     { background: var(--orange-l); border-left-color: var(--orange); }
     .change-medium   { background: var(--yellow-l); border-left-color: var(--yellow); }
     .change-info     { background: var(--green-l); border-left-color: var(--green); }
+    /* ── IMPROVED DIFF VIEW ── */
+    .diff-sections { padding: 0 18px 18px; display: flex; flex-direction: column; gap: 16px; }
+    .diff-section { display: flex; flex-direction: column; gap: 8px; }
+    .diff-section-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 6px 10px; border-radius: var(--radius); }
+    .diff-label-added   { background: var(--green-l);  color: var(--green); }
+    .diff-label-removed { background: var(--red-l);    color: var(--red); }
+    .diff-label-modified{ background: var(--orange-l); color: var(--orange); }
+    .diff-event-row { border-radius: var(--radius); border: 1px solid; overflow: hidden; }
+    .diff-card-added    { border-color: var(--green);  background: var(--green-l); }
+    .diff-card-removed  { border-color: var(--red);    background: var(--red-l); opacity: 0.8; }
+    .diff-card-modified { border-color: var(--orange); background: var(--orange-l); }
+    .diff-event-row-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px 4px; }
+    .diff-status-icon { font-size: 1.1rem; font-weight: 800; line-height: 1; width: 18px; text-align: center; }
+    .diff-card-added  .diff-status-icon { color: var(--green); }
+    .diff-card-removed .diff-status-icon { color: var(--red); }
+    .diff-card-modified .diff-status-icon { color: var(--orange); }
+    .diff-event-name { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+    .diff-unchanged-section { border-top: 1px solid var(--border); margin: 0 18px 18px; }
+    .diff-unchanged-label { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; font-size: 0.72rem; color: var(--text-3); cursor: pointer; user-select: none; }
+    .diff-unchanged-label:hover { color: var(--text-2); }
+    .diff-unchanged-body { display: none; }
+    .diff-unchanged-section.open .diff-unchanged-body { display: block; }
+    .diff-unchanged-section.open .diff-toggle { display: inline-block; transform: rotate(90deg); }
+    .diff-toggle { display: inline-block; transition: transform 0.2s; font-size: 0.8rem; }
+    .unchanged-grid .event-card { opacity: 0.45; }
+
+    /* ── MODE PICKER ── */
+    .mode-card { border: 2px solid var(--border); border-radius: var(--radius-lg); padding: 18px; cursor: pointer; transition: all 0.15s; background: var(--surface); opacity: 0.6; }
+    .mode-card:hover { opacity: 1; border-color: var(--border-2); }
+    .mode-card-selected { opacity: 1; border-color: var(--accent); background: var(--accent-l); }
+    .mode-icon { font-size: 1.8rem; margin-bottom: 10px; }
+    .mode-title { font-size: 0.85rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .mode-desc { font-size: 0.72rem; color: var(--text-3); line-height: 1.5; margin-bottom: 12px; }
+    .mode-tag { display: inline-block; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; font-size: 0.6rem; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.05em; }
 
     /* ── TREND CHART ── */
     .trend-chart-wrap { width: 100%; overflow-x: auto; }
@@ -322,6 +417,34 @@
   </style>
 </head>
 <body>
+
+<!-- ── LOGIN OVERLAY ── -->
+<div id="loginOverlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:2000;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:36px 40px;width:360px;box-shadow:var(--shadow-md);">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;">
+      <div class="logo-icon">K</div>
+      <div>
+        <div style="font-weight:700;font-size:1.1rem;">Kaliper</div>
+        <div style="font-size:0.65rem;color:var(--text-3);">Tracking QA</div>
+      </div>
+    </div>
+    <div style="font-size:0.8rem;color:var(--text-2);margin-bottom:20px;">Sign in to your workspace</div>
+    <label style="display:block;font-size:0.72rem;color:var(--text-3);margin-bottom:5px;">Tenant ID</label>
+    <input id="loginTenant" type="text" placeholder="e.g. tenant_demo" onkeydown="loginKeydown(event)"
+      style="width:100%;padding:9px 11px;border:1px solid var(--border-2);border-radius:var(--radius);font-family:var(--font);font-size:0.85rem;margin-bottom:12px;" />
+    <label style="display:block;font-size:0.72rem;color:var(--text-3);margin-bottom:5px;">API Key <span style="color:var(--text-3);font-weight:400">(leave blank in dev mode)</span></label>
+    <input id="loginKey" type="password" placeholder="Your Kaliper API key" onkeydown="loginKeydown(event)"
+      style="width:100%;padding:9px 11px;border:1px solid var(--border-2);border-radius:var(--radius);font-family:var(--font);font-size:0.85rem;margin-bottom:16px;" />
+    <div id="loginError" style="display:none;background:var(--red-l);color:var(--red);border-radius:var(--radius);padding:8px 12px;font-size:0.75rem;margin-bottom:14px;"></div>
+    <button id="loginBtn" onclick="doLogin()"
+      style="width:100%;padding:10px;background:var(--accent);color:white;border:none;border-radius:var(--radius);font-family:var(--font);font-size:0.85rem;font-weight:600;cursor:pointer;">Sign In</button>
+  </div>
+</div>
+
+<!-- ── APP SHELL (hidden until logged in) ── -->
+<div id="appShell" style="display:none;flex-direction:column;min-height:100vh;">
+
+
 
 <!-- ── SIDEBAR ── -->
 <aside class="sidebar">
@@ -364,6 +487,10 @@
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
       Plan Explorer
     </button>
+    <button class="nav-item" onclick="switchPage('upload', event)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload Plan
+    </button>
   </nav>
   <div class="sidebar-bottom">
     <div class="ws-label">Workspace</div>
@@ -379,15 +506,17 @@
 <header class="topbar">
   <div class="topbar-title" id="pageTitle">Overview</div>
   <div class="topbar-right">
-    <div class="status-pill" id="statusPill">
-      <span class="status-dot"></span> Live
-    </div>
-    <span class="time-badge" id="lastUpdated">—</span>
-    <button class="refresh-btn" onclick="loadAll()">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-      Refresh
-    </button>
+  <div class="status-pill" id="statusPill">
+  <span class="status-dot"></span> Live
   </div>
+  <span class="time-badge" id="lastUpdated">—</span>
+  <span id="sessionTenantLabel" style="font-size:0.72rem;color:var(--text-3);font-family:var(--mono);"></span>
+  <button class="refresh-btn" onclick="loadAll()">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+    Refresh
+    </button>
+      <button onclick="doLogout()" style="background:none;border:1px solid var(--border);color:var(--text-3);padding:7px 12px;border-radius:var(--radius);font-family:var(--font);font-size:0.72rem;cursor:pointer;">Sign Out</button>
+    </div>
 </header>
 
 <!-- ── MAIN ── -->
@@ -566,12 +695,157 @@
     </div>
   </div>
 
+  <div class="page" id="page-upload">
+    <div style="max-width:600px;margin:40px auto;">
+
+      <h2 style="font-size:1.4rem;font-weight:700;margin-bottom:4px;">Workspace Setup</h2>
+      <p style="color:var(--text-3);font-size:0.8rem;margin-bottom:28px;">
+        Get Kaliper auditing your tracking data in two steps.
+      </p>
+
+      <!-- ── STEP 1: Upload tracking plan ── -->
+      <div class="setup-step" id="step1Card">
+        <div class="setup-step-header">
+          <div class="step-badge" id="step1Badge">1</div>
+          <div>
+            <div class="step-title">Upload Your Tracking Plan</div>
+            <div class="step-sub">Defines what events and properties your app <em>should</em> send — Kaliper validates everything against this.</div>
+          </div>
+        </div>
+        <div class="setup-step-body" id="step1Body">
+          <label class="file-drop" id="fileDrop" for="planFileInput">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span id="fileLabel">Choose file or drag here</span>
+            <span style="font-size:0.7rem;color:var(--text-3);margin-top:2px;">.json or .xlsx</span>
+            <input type="file" id="planFileInput" accept=".json,.xlsx" style="display:none;" onchange="onFileChosen(this)" />
+          </label>
+          <button class="btn-accent" id="uploadPlanBtn" style="width:100%;margin-top:10px;" onclick="uploadPlan()" disabled>Upload Plan</button>
+          <div id="planUploadMsg" class="setup-msg"></div>
+        </div>
+      </div>
+
+      <!-- ── STEP 2: Choose your data source ── -->
+      <div class="setup-step setup-step-locked" id="step2Card">
+        <div class="setup-step-header">
+          <div class="step-badge" id="step2Badge">2</div>
+          <div>
+            <div class="step-title">Choose How to Connect Your Data</div>
+            <div class="step-sub">Pick the mode that fits your situation.</div>
+          </div>
+        </div>
+        <div class="setup-step-body" id="step2Body">
+
+          <!-- Mode picker -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+            <div class="mode-card mode-card-selected" id="modeCardHistorical" onclick="selectMode('historical')">
+              <div class="mode-icon">📦</div>
+              <div class="mode-title">Audit historical data</div>
+              <div class="mode-desc">You already have events in Amplitude. Pull them into Kaliper and get a full health report.</div>
+              <div class="mode-tag">Amplitude connector</div>
+            </div>
+            <div class="mode-card" id="modeCardLive" onclick="selectMode('live')">
+              <div class="mode-icon">⚡</div>
+              <div class="mode-title">Monitor live events</div>
+              <div class="mode-desc">Events are flowing through Segment right now. Kaliper watches them in real time.</div>
+              <div class="mode-tag">Segment webhook</div>
+            </div>
+          </div>
+
+          <!-- Historical mode: Amplitude credentials -->
+          <div id="modeHistoricalPanel">
+            <div style="font-size:0.72rem;color:var(--text-3);margin-bottom:12px;line-height:1.5;">
+              Go to <strong>app.amplitude.com</strong> → your project → <strong>Settings → Projects → [your project]</strong>.
+              Copy the <strong>API Key</strong> and <strong>Secret Key</strong> from there.
+            </div>
+            <div style="margin-bottom:10px;">
+              <label class="field-label">Amplitude API Key</label>
+              <input type="text" id="ampApiKey" class="setup-input" placeholder="e.g. c7469ece5f531a07..." disabled />
+            </div>
+            <div style="margin-bottom:14px;">
+              <label class="field-label">Amplitude Secret Key</label>
+              <input type="password" id="ampSecretKey" class="setup-input" placeholder="Your secret key" disabled />
+            </div>
+            <button class="btn-accent" id="saveConnectorBtn" style="width:100%;" onclick="saveConnector()" disabled>Connect Amplitude</button>
+            <div id="connectorMsg" class="setup-msg"></div>
+          </div>
+
+          <!-- Live mode: Webhook URL -->
+          <div id="modeLivePanel" style="display:none;">
+            <div style="font-size:0.72rem;color:var(--text-3);margin-bottom:12px;line-height:1.6;">
+              Copy this webhook URL and paste it into <strong>Segment → Connections → Destinations → Add Destination → Webhooks (Actions)</strong>.
+              Segment will forward every event to Kaliper automatically.
+            </div>
+            <label class="field-label">Your Kaliper Webhook URL</label>
+            <div style="display:flex;gap:8px;margin-bottom:14px;">
+              <input type="text" id="webhookUrlDisplay" class="setup-input" style="flex:1;font-family:var(--mono);font-size:0.7rem;" readonly />
+              <button class="btn-accent" onclick="copyWebhookUrl()" id="copyWebhookBtn" style="white-space:nowrap;">Copy URL</button>
+            </div>
+            <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;font-size:0.72rem;line-height:1.8;color:var(--text-2);">
+              <strong>In Segment:</strong><br>
+              1. Go to <strong>Connections → Destinations → Add Destination</strong><br>
+              2. Search for <strong>"Webhooks (Actions)"</strong> and select it<br>
+              3. Connect it to your source, name it <strong>"Kaliper"</strong><br>
+              4. In <strong>Mappings</strong>, add a new mapping → Send → Event Type is Track<br>
+              5. Set the URL field to the webhook URL above<br>
+              6. Enable the destination
+            </div>
+            <div style="margin-top:12px;" id="webhookLiveMsg" class="setup-msg"></div>
+            <button class="btn-accent" style="width:100%;margin-top:10px;" onclick="markWebhookDone()">Done — I've added it to Segment</button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── STEP 3: Action (ingestion or monitoring) ── -->
+      <div class="setup-step setup-step-locked" id="step3Card">
+        <div class="setup-step-header">
+          <div class="step-badge" id="step3Badge">3</div>
+          <div>
+            <div class="step-title" id="step3Title">Run Data Ingestion</div>
+            <div class="step-sub" id="step3Sub">Pull your Amplitude data into Kaliper for auditing</div>
+          </div>
+        </div>
+        <div class="setup-step-body" id="step3Body">
+          <!-- Historical: Start ingestion -->
+          <div id="step3HistoricalPanel">
+            <div style="font-size:0.72rem;color:var(--text-3);margin-bottom:14px;line-height:1.5;">
+              Kaliper will pull your events from Amplitude, validate them against your tracking plan, and generate a full audit report.
+            </div>
+            <button class="btn-accent" id="startIngestionBtn" style="width:100%;padding:12px;font-size:1rem;" onclick="startIngestion()" disabled>▶ Start Ingestion</button>
+            <div id="ingestionProgressWrap" style="display:none;margin-top:16px;">
+              <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text-2);margin-bottom:6px;">
+                <span id="ingestionStatus">Starting...</span>
+                <span id="ingestionPct">0%</span>
+              </div>
+              <div class="cov-track"><div class="cov-fill" id="ingestionBar" style="background:var(--accent);width:0%;"></div></div>
+            </div>
+            <div id="ingestionMsg" class="setup-msg"></div>
+          </div>
+          <!-- Live: Go to Overview -->
+          <div id="step3LivePanel" style="display:none;">
+            <div style="font-size:0.72rem;color:var(--text-3);margin-bottom:14px;line-height:1.5;">
+              Events from Segment are flowing into Kaliper. Go to Overview to see issues and your health score in real time — it updates as events arrive.
+            </div>
+            <button class="btn-accent" style="width:100%;padding:12px;font-size:1rem;" onclick="switchPage('overview', event)">Go to Overview &rarr;</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- ════ RUN HISTORY ════ -->
   <div class="page" id="page-runs">
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+      <button class="refresh-btn" style="background: var(--red); box-shadow: none;" onclick="clearHistory()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+        Clear History
+      </button>
+    </div>
     <div class="table-wrap">
       <table>
         <thead><tr>
-          <th>Run ID</th><th>Domain</th><th>Events</th><th>Issues</th><th>Score</th><th>Started</th><th>Duration</th>
+          <th>Run ID</th><th>Label</th><th>Domain</th><th>Events</th><th>Issues</th><th>Score</th><th>Started</th><th>Duration</th>
         </tr></thead>
         <tbody id="runsBody">
           <tr><td colspan="7"><div class="empty"><span class="loader"></span></div></td></tr>
@@ -598,11 +872,17 @@
             <div class="plan-detail-title" id="planDetailTitle">Select a version</div>
             <div class="plan-detail-meta" id="planDetailMeta">← Click a version to inspect its events</div>
           </div>
-          <div class="plan-actions" id="planActions" style="display:none;">
-            <span style="font-size:0.7rem;color:var(--text-3);">Diff vs:</span>
-            <select class="diff-select" id="diffTargetSelect"></select>
-            <button class="btn-ghost" onclick="showEventList()">Show events</button>
-            <button class="btn-accent" onclick="runDiff()">Compare →</button>
+          <div class="plan-actions" id="planActions" style="display:none; justify-content: space-between; align-items: center;">
+            <div>
+              <span style="font-size:0.7rem;color:var(--text-3);">Diff vs:</span>
+              <select class="diff-select" id="diffTargetSelect"></select>
+              <button class="btn-accent" onclick="runDiff()">Compare</button>
+              <button class="btn-ghost" style="position:relative; margin-left:8px;">
+                Upload to Compare
+                <input type="file" id="diffUploadInput" accept=".json" style="opacity:0; position:absolute; top:0; left:0; width:100%; height:100%; cursor:pointer;" onchange="uploadToCompare(this)">
+              </button>
+            </div>
+            <div id="planActiveAction"></div>
           </div>
         </div>
         <div id="planDetailBody">
@@ -617,18 +897,148 @@
 
 </main>
 
+</div><!-- /#appShell -->
+
 <script>
-  const API    = 'http://127.0.0.1:5000';
-  const TENANT = 'tenant_demo';
+  const API = 'http://127.0.0.1:5000';
+
+  // ---------------------------------------------------------------------------
+  // Session — tenant identity is resolved at login, not hardcoded
+  // ---------------------------------------------------------------------------
+  let TENANT    = sessionStorage.getItem('kaliper_tenant') || null;
+  let API_KEY   = sessionStorage.getItem('kaliper_api_key') || null;
+  let AUTH_MODE = sessionStorage.getItem('kaliper_auth_mode') || 'dev';
 
   let WORKSPACE = 'ecommerce_workspace';
   let currentPage = 'overview';
   let planVersions = [];
   let selectedVersionId = null;
 
+  // ---------------------------------------------------------------------------
+  // API fetch — attach API key header when we have one
+  // ---------------------------------------------------------------------------
+  async function apiFetch(path) {
+    const headers = {};
+    if (API_KEY) headers['X-Kaliper-API-Key'] = API_KEY;
+    const res = await fetch(API + path, { headers });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    return res.json();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Login screen
+  // ---------------------------------------------------------------------------
+  function showLogin(errorMsg) {
+    document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('appShell').style.display = 'none';
+    if (errorMsg) {
+      const el = document.getElementById('loginError');
+      el.textContent = errorMsg;
+      el.style.display = 'block';
+    }
+  }
+
+  function hideLogin() {
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('appShell').style.display = 'flex';
+  }
+
+  async function doLogin() {
+    const tenantInput = document.getElementById('loginTenant').value.trim();
+    const keyInput    = document.getElementById('loginKey').value.trim();
+    const btn         = document.getElementById('loginBtn');
+    const err         = document.getElementById('loginError');
+    err.style.display = 'none';
+
+    if (!tenantInput) { err.textContent = 'Tenant ID is required.'; err.style.display = 'block'; return; }
+
+    btn.disabled = true;
+    btn.textContent = 'Signing in...';
+
+    try {
+      const res = await fetch(`${API}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenant_id: tenantInput, api_key: keyInput }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        err.textContent = data.message || 'Login failed.';
+        err.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+        return;
+      }
+      // Persist session
+      TENANT    = data.tenant_id;
+      API_KEY   = keyInput || null;
+      AUTH_MODE = data.auth_mode;
+      sessionStorage.setItem('kaliper_tenant',    TENANT);
+      sessionStorage.setItem('kaliper_api_key',   API_KEY || '');
+      sessionStorage.setItem('kaliper_auth_mode', AUTH_MODE);
+
+      // Populate workspace switcher from login response
+      if (data.workspaces && data.workspaces.length) {
+        const sel = document.getElementById('wsSelect');
+        sel.innerHTML = data.workspaces.map(w =>
+          `<option value="${w.workspace_id}">${w.workspace_id}</option>`
+        ).join('');
+        WORKSPACE = sel.value;
+      }
+
+      document.getElementById('sessionTenantLabel').textContent = TENANT;
+      hideLogin();
+      loadAll();
+    } catch (e) {
+      err.textContent = 'Cannot reach server. Is it running?';
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+  }
+
+  function doLogout() {
+    sessionStorage.removeItem('kaliper_tenant');
+    sessionStorage.removeItem('kaliper_api_key');
+    sessionStorage.removeItem('kaliper_auth_mode');
+    TENANT = null; API_KEY = null;
+    showLogin();
+  }
+
+  // Enter key on login form
+  function loginKeydown(e) { if (e.key === 'Enter') doLogin(); }
+
+  // ---------------------------------------------------------------------------
+  // Session restore on page load
+  // ---------------------------------------------------------------------------
+  async function restoreSession() {
+    if (!TENANT) { showLogin(); return; }
+    // Verify the stored session is still valid
+    try {
+      const headers = {};
+      if (API_KEY) headers['X-Kaliper-API-Key'] = API_KEY;
+      const params = AUTH_MODE === 'dev' ? `?tenant_id=${TENANT}` : '';
+      const res  = await fetch(`${API}/auth/me${params}`, { headers });
+      const data = await res.json();
+      if (!res.ok || !data.success) { showLogin(); return; }
+      TENANT    = data.tenant_id;
+      AUTH_MODE = data.auth_mode;
+      if (data.workspaces && data.workspaces.length) {
+        const sel = document.getElementById('wsSelect');
+        sel.innerHTML = data.workspaces.map(w =>
+          `<option value="${w.workspace_id}">${w.workspace_id}</option>`
+        ).join('');
+        WORKSPACE = sel.value;
+      }
+      document.getElementById('sessionTenantLabel').textContent = TENANT;
+      hideLogin();
+      loadAll();
+    } catch { showLogin(); }
+  }
+
   const PAGE_TITLES = {
     overview: 'Overview', trends: 'Trends', coverage: 'Coverage',
-    issues: 'Issues', events: 'Events', runs: 'Run History', plan: 'Plan Explorer'
+    issues: 'Issues', events: 'Events', runs: 'Run History', plan: 'Plan Explorer', upload: 'Upload Tracking Plan'
   };
 
   function fmt(ts) {
@@ -654,11 +1064,6 @@
     if (n >= 40) return 'var(--orange)';
     return 'var(--red)';
   }
-  async function apiFetch(path) {
-    const res = await fetch(API + path);
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-    return res.json();
-  }
   function showError(msg) {
     const b = document.getElementById('errorBar');
     b.textContent = '⚠ ' + msg;
@@ -678,7 +1083,8 @@
   function loadPage(name) {
     const loaders = {
       overview: loadOverview, trends: loadTrends, coverage: loadCoverage,
-      issues: loadIssues, events: loadEvents, runs: loadRuns, plan: loadPlan
+      issues: loadIssues, events: loadEvents, runs: loadRuns, plan: loadPlan,
+      upload: loadUploadPage
     };
     if (loaders[name]) loaders[name]();
   }
@@ -750,10 +1156,11 @@
       const col = p.health_score >= 80 ? '#22c55e' : p.health_score >= 60 ? '#eab308' : p.health_score >= 40 ? '#f97316' : '#ef4444';
       html += `<circle cx="${x}" cy="${y}" r="4" fill="${col}" stroke="white" stroke-width="1.5"><title>Run #${p.run_id} · Score: ${p.health_score} · Issues: ${p.issue_count}</title></circle>`;
     });
-    const step = Math.max(1, Math.floor(n / 5));
+    const step = Math.max(1, Math.floor(n / 3));
     points.forEach((p, i) => {
       if (i % step !== 0 && i !== n-1) return;
-      const label = p.started_at ? new Date(p.started_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) : `#${p.run_id}`;
+      const d = p.started_at ? new Date(p.started_at) : null;
+      const label = d ? `${d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})} ${d.getHours()}:${d.getMinutes().toString().padStart(2,'0')}` : `#${p.run_id}`;
       html += `<text x="${getX(i)}" y="${pad.t + ch + 14}" text-anchor="middle" fill="#9aa0b4" font-size="9">${label}</text>`;
     });
     svg.innerHTML = html;
@@ -761,6 +1168,18 @@
 
   async function loadOverview() {
     try {
+      // Use raw fetch for plan-active so a 404 (no plan yet) doesn't throw
+      const planRes = await fetch(`${API}/plan-active?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`);
+      const active = await planRes.json();
+      if (!planRes.ok || active.error) {
+        document.getElementById('errorBar').style.display = 'block';
+        document.getElementById('errorBar').style.background = 'var(--orange-l)';
+        document.getElementById('errorBar').style.color = 'var(--orange)';
+        document.getElementById('errorBar').innerHTML = '<strong>No tracking plan is active for this workspace.</strong> Go to "Upload Plan" in the sidebar to upload your tracking plan first, then register your Amplitude connector and start ingestion.';
+      } else {
+        clearError();
+      }
+
       const [sc, trend] = await Promise.all([
         apiFetch(`/scorecard?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`),
         apiFetch(`/trends?tenant_id=${TENANT}&workspace_id=${WORKSPACE}&limit=20`).catch(()=>null),
@@ -772,7 +1191,7 @@
       document.getElementById('kpiEvents').textContent = (sc.event_count||0).toLocaleString();
       document.getElementById('kpiIssues').textContent = (sc.issue_count||0).toLocaleString();
       document.getElementById('kpiIssues').style.color = sc.issue_count > 0 ? 'var(--red)' : 'var(--green)';
-      document.getElementById('kpiRunId').textContent = '#' + (sc.run_id || '—');
+      document.getElementById('kpiRunId').innerHTML = '#' + (sc.run_id || '—') + (sc.label ? `<br><span style="font-size:12px;color:var(--text-3);font-weight:normal">${sc.label}</span>` : '');
       document.getElementById('kpiDomain').textContent = sc.domain || '—';
       drawDonut(sc.severity_counts || {});
       const types = sc.top_issue_types || [];
@@ -810,11 +1229,13 @@
       }
       document.getElementById('statusPill').style.background = 'var(--green-l)';
       document.getElementById('statusPill').style.color = 'var(--green)';
-      clearError();
     } catch(e) {
       document.getElementById('statusPill').style.background = 'var(--red-l)';
       document.getElementById('statusPill').style.color = 'var(--red)';
-      showError('Cannot reach server on port 5000. Is the ingestion server running? ' + e.message);
+      const isNetworkError = e.message && (e.message.includes('Failed to fetch') || e.message.includes('NetworkError'));
+      showError(isNetworkError
+        ? 'Cannot reach the ingestion server on port 5000. Is it running?'
+        : 'Server error: ' + e.message);
     }
   }
 
@@ -937,6 +1358,7 @@
             const col = typeof sc === 'number' ? scoreColor(sc) : 'var(--text-3)';
             return `<tr>
               <td class="td-primary td-mono">#${r.id}</td>
+              <td style="color:var(--text-2); font-weight:500;">${r.label||'—'}</td>
               <td><span class="chip chip-active">${r.domain||'—'}</span></td>
               <td>${(r.event_count||0).toLocaleString()}</td>
               <td style="color:${r.issue_count>0?'var(--red)':'var(--green)'};font-weight:600">${(r.issue_count||0).toLocaleString()}</td>
@@ -976,7 +1398,11 @@
       const m = el.getAttribute('onclick')?.match(/\d+/);
       el.classList.toggle('selected', m && parseInt(m[0]) === id);
     });
+    const verObj = planVersions.find(v=>v.id===id);
     document.getElementById('planActions').style.display = 'flex';
+    document.getElementById('planActiveAction').innerHTML = (verObj && !verObj.is_active) 
+      ? `<button class="btn-accent" style="background:var(--green);" onclick="setPlanActive(${id})">Set as Active Plan</button>`
+      : '';
     const other = planVersions.find(v=>v.id!==id);
     if (other) document.getElementById('diffTargetSelect').value = other.id;
     await showEventList();
@@ -1009,6 +1435,24 @@
     }).join('') + `</div>`;
   }
 
+  function _diffEventCard(ev, status, changes) {
+    const rp = ev.required_properties||[], types = ev.property_types||{};
+    const all = [...new Set([...rp,...Object.keys(types)])];
+    const idTag = ev.identity_required ? `<span class="prop-badge pb-id">id req</span>` : '';
+    const propsHtml = all.map(p=>`<span class="prop-badge ${rp.includes(p)?'pb-req':'pb-opt'}">${p}:${types[p]||'any'}</span>`).join('');
+    const icon = status==='added' ? '+' : status==='removed' ? '&#8722;' : '~';
+    const changesHtml = changes.length
+      ? `<div class="change-list" style="margin:0 0 8px 28px;padding:0;gap:4px;display:flex;flex-direction:column;">`
+        + changes.map(c=>`<div class="change-item ${c.cls}" style="font-size:0.65rem;padding:5px 10px;">${c.message}</div>`).join('')
+        + `</div>`
+      : '';
+    return `<div class="diff-event-row diff-card-${status}">
+      <div class="diff-event-row-header"><span class="diff-status-icon">${icon}</span><span class="diff-event-name">${ev.name}</span></div>
+      <div class="ec-props" style="padding:2px 12px 8px 30px;">${idTag}${propsHtml||'<span style="color:var(--text-3);font-size:0.6rem">no props</span>'}</div>
+      ${changesHtml}
+    </div>`;
+  }
+
   async function runDiff() {
     if (!selectedVersionId) return;
     const toId = parseInt(document.getElementById('diffTargetSelect').value);
@@ -1016,35 +1460,98 @@
     const body = document.getElementById('planDetailBody');
     body.innerHTML = '<div class="empty"><span class="loader"></span> Computing diff…</div>';
     try {
-      const diff = await apiFetch(`/plan-diff?tenant_id=${TENANT}&workspace_id=${WORKSPACE}&from_version=${selectedVersionId}&to_version=${toId}`);
+      const [diff, fromData, toData] = await Promise.all([
+        apiFetch(`/plan-diff?tenant_id=${TENANT}&workspace_id=${WORKSPACE}&from_version=${selectedVersionId}&to_version=${toId}`),
+        apiFetch(`/plan-version/${selectedVersionId}`),
+        apiFetch(`/plan-version/${toId}`),
+      ]);
       const compat = Math.round(diff.compatibility_score*100);
-      const cCol = compat >= 80 ? 'var(--green)' : compat >= 50 ? 'var(--yellow)' : 'var(--red)';
-      document.getElementById('planDetailTitle').textContent = `Diff: v#${diff.from_version.id} → v#${diff.to_version.id}`;
+      const cCol = compat>=80?'var(--green)':compat>=50?'var(--yellow)':'var(--red)';
+      document.getElementById('planDetailTitle').textContent = `Diff: v#${diff.from_version.id} vs v#${diff.to_version.id}`;
       document.getElementById('planDetailMeta').textContent = `${diff.from_version.event_count} → ${diff.to_version.event_count} events`;
-      const diffMap = {};
-      (diff.added_events||[]).forEach(n=>diffMap[n]='added');
-      (diff.removed_events||[]).forEach(n=>diffMap[n]='removed');
-      [...(diff.breaking_changes||[]),...(diff.modified_events||[]),...(diff.warnings||[])].forEach(c=>{
-        const m = c.message.match(/Event '([^']+)'/);
-        if (m && !diffMap[m[1]]) diffMap[m[1]]='modified';
-      });
+
+      // Group change messages by event name
       const allChanges = [
         ...(diff.breaking_changes||[]).map(c=>({...c,cls:'change-critical'})),
-        ...(diff.warnings||[]).map(c=>({...c,cls:'change-medium'})),
         ...(diff.modified_events||[]).map(c=>({...c,cls:'change-high'})),
+        ...(diff.warnings||[]).map(c=>({...c,cls:'change-medium'})),
       ];
-      body.innerHTML = `
-        <div class="diff-summary-grid">
-          <div class="diff-kpi"><div class="diff-kpi-val" style="color:var(--green)">+${diff.added_events.length}</div><div class="diff-kpi-lbl">Added</div></div>
-          <div class="diff-kpi"><div class="diff-kpi-val" style="color:var(--red)">-${diff.removed_events.length}</div><div class="diff-kpi-lbl">Removed</div></div>
-          <div class="diff-kpi"><div class="diff-kpi-val" style="color:var(--orange)">${diff.breaking_changes.length}</div><div class="diff-kpi-lbl">Breaking</div></div>
-          <div class="diff-kpi"><div class="diff-kpi-val" style="color:${cCol}">${compat}%</div><div class="diff-kpi-lbl">Compat.</div></div>
-        </div>
-        ${allChanges.length ? `<div class="change-list">${allChanges.map(c=>`<div class="change-item ${c.cls}"><span style="font-size:0.6rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-right:8px">${c.severity}</span>${c.message}</div>`).join('')}</div>` : `<div style="color:var(--green);font-size:0.78rem;padding:12px 18px;font-weight:600">✓ No breaking changes</div>`}
-      `;
-      const toData = await apiFetch(`/plan-version/${toId}`);
-      const removed = (diff.removed_events||[]).map(name=>({name,required_properties:[],property_types:{},identity_required:false}));
-      renderEventCards([...(toData.events||[]),...removed], diffMap);
+      const changesByEvent = {};
+      allChanges.forEach(c => {
+        const m = c.message.match(/Event '([^']+)'/);
+        const key = m ? m[1] : '_';
+        (changesByEvent[key] = changesByEvent[key]||[]).push(c);
+      });
+
+      const addedSet   = new Set(diff.added_events||[]);
+      const removedSet = new Set(diff.removed_events||[]);
+      const modifiedSet = new Set(Object.keys(changesByEvent).filter(k=>k!=='_'));
+      const toEvents   = toData.events||[];
+      const fromEvents = fromData.events||[];
+      const unchanged  = toEvents.filter(ev=>!addedSet.has(ev.name)&&!modifiedSet.has(ev.name));
+      const totalChanges = addedSet.size + removedSet.size + modifiedSet.size;
+
+      let html = `<div class="diff-summary-grid">
+        <div class="diff-kpi"><div class="diff-kpi-val" style="color:var(--green)">+${addedSet.size}</div><div class="diff-kpi-lbl">Added</div></div>
+        <div class="diff-kpi"><div class="diff-kpi-val" style="color:var(--red)">−${removedSet.size}</div><div class="diff-kpi-lbl">Removed</div></div>
+        <div class="diff-kpi"><div class="diff-kpi-val" style="color:var(--orange)">${modifiedSet.size}</div><div class="diff-kpi-lbl">Modified</div></div>
+        <div class="diff-kpi"><div class="diff-kpi-val" style="color:${cCol}">${compat}%</div><div class="diff-kpi-lbl">Compat.</div></div>
+      </div>`;
+
+      if (totalChanges === 0) {
+        html += `<div style="padding:28px 20px;text-align:center;color:var(--green);font-weight:600;font-size:0.85rem;">No differences between these versions.</div>`;
+      } else {
+        html += `<div class="diff-sections">`;
+        if (addedSet.size) {
+          html += `<div class="diff-section"><div class="diff-section-label diff-label-added">+ Added Events (${addedSet.size})</div>`;
+          diff.added_events.forEach(name => {
+            const ev = toEvents.find(e=>e.name===name)||{name,required_properties:[],property_types:{},identity_required:false};
+            html += _diffEventCard(ev,'added',[]);
+          });
+          html += `</div>`;
+        }
+        if (removedSet.size) {
+          html += `<div class="diff-section"><div class="diff-section-label diff-label-removed">− Removed Events (${removedSet.size})</div>`;
+          diff.removed_events.forEach(name => {
+            const ev = fromEvents.find(e=>e.name===name)||{name,required_properties:[],property_types:{},identity_required:false};
+            html += _diffEventCard(ev,'removed',[]);
+          });
+          html += `</div>`;
+        }
+        if (modifiedSet.size) {
+          html += `<div class="diff-section"><div class="diff-section-label diff-label-modified">~ Modified Events (${modifiedSet.size})</div>`;
+          modifiedSet.forEach(name => {
+            const ev = toEvents.find(e=>e.name===name)||{name,required_properties:[],property_types:{},identity_required:false};
+            html += _diffEventCard(ev,'modified',changesByEvent[name]||[]);
+          });
+          html += `</div>`;
+        }
+        if (changesByEvent['_']?.length) {
+          html += `<div class="diff-section"><div class="diff-section-label diff-label-modified">Other Changes</div><div class="change-list">`
+            + changesByEvent['_'].map(c=>`<div class="change-item ${c.cls}">${c.message}</div>`).join('')
+            + `</div></div>`;
+        }
+        html += `</div>`;
+      }
+
+      // Unchanged — collapsed by default
+      if (unchanged.length) {
+        html += `<div class="diff-unchanged-section">
+          <div class="diff-unchanged-label" onclick="this.parentElement.classList.toggle('open')">
+            <span>= ${unchanged.length} unchanged event${unchanged.length!==1?'s':''}</span>
+            <span class="diff-toggle">&#9658;</span>
+          </div>
+          <div class="diff-unchanged-body"><div class="event-grid unchanged-grid">`
+          + unchanged.map(ev => {
+              const rp=ev.required_properties||[],types=ev.property_types||{};
+              const all=[...new Set([...rp,...Object.keys(types)])];
+              const idTag=ev.identity_required?`<span class="prop-badge pb-id">id req</span>`:'';
+              return `<div class="event-card"><div class="ec-name">${ev.name}</div><div class="ec-props">${idTag}${all.map(p=>`<span class="prop-badge ${rp.includes(p)?'pb-req':'pb-opt'}">${p}:${types[p]||'any'}</span>`).join('')}</div></div>`;
+            }).join('')
+          + `</div></div></div>`;
+      }
+
+      body.innerHTML = html;
     } catch(e) { body.innerHTML = `<div class="empty">Diff failed: ${e.message}</div>`; }
   }
 
@@ -1059,13 +1566,335 @@
     } catch {}
   }
 
+  function setMsg(elId, msg, isError) {
+    const el = document.getElementById(elId);
+    el.style.color = isError ? 'var(--red)' : 'var(--green)';
+    el.textContent = msg;
+  }
+
+  function onFileChosen(input) {
+    const label = document.getElementById('fileLabel');
+    const drop = document.getElementById('fileDrop');
+    const btn = document.getElementById('uploadPlanBtn');
+    if (input.files.length) {
+      label.textContent = input.files[0].name;
+      drop.classList.add('file-drop-chosen');
+      btn.disabled = false;
+    } else {
+      label.textContent = 'Choose file or drag here';
+      drop.classList.remove('file-drop-chosen');
+      btn.disabled = false;
+    }
+  }
+
+  function markStepDone(stepNum) {
+    const badge = document.getElementById('step' + stepNum + 'Badge');
+    badge.textContent = '✓';
+    badge.classList.add('step-badge-done');
+    document.getElementById('step' + stepNum + 'Card').classList.add('setup-step-done');
+  }
+
+  function unlockStep(stepNum) {
+    const card = document.getElementById('step' + stepNum + 'Card');
+    card.classList.remove('setup-step-locked');
+    // enable all inputs and buttons inside
+    card.querySelectorAll('input, button').forEach(el => el.disabled = false);
+  }
+
+  async function uploadPlan() {
+    const fileInput = document.getElementById('planFileInput');
+    const isEcommerce = WORKSPACE === 'ecommerce_workspace';
+    
+    if (!fileInput.files.length && !isEcommerce) {
+      setMsg('planUploadMsg', '⚠ Please select a file first.', true);
+      return;
+    }
+    const btn = document.getElementById('uploadPlanBtn');
+    btn.disabled = true;
+    btn.textContent = 'Uploading...';
+    setMsg('planUploadMsg', '', false);
+
+    const formData = new FormData();
+    if (fileInput.files.length > 0) {
+      formData.append('file', fileInput.files[0]);
+    }
+
+    try {
+      const res = await fetch(`${API}/upload-plan?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`, {
+        method: 'POST', body: formData
+      }).then(r => r.json());
+      if (res.success) {
+        setMsg('planUploadMsg', '✓ Plan uploaded and activated.', false);
+        markStepDone(1);
+        unlockStep(2);
+        fileInput.value = '';
+      } else {
+        setMsg('planUploadMsg', '✗ ' + (res.error || 'Upload failed.'), true);
+        btn.disabled = false;
+        btn.textContent = 'Upload Plan';
+      }
+    } catch {
+      setMsg('planUploadMsg', '✗ Cannot reach server. Is the ingestion server running?', true);
+      btn.disabled = false;
+      btn.textContent = 'Upload Plan';
+    }
+  }
+
+  function selectMode(mode) {
+    document.getElementById('modeCardHistorical').classList.toggle('mode-card-selected', mode === 'historical');
+    document.getElementById('modeCardLive').classList.toggle('mode-card-selected', mode === 'live');
+    
+    document.getElementById('modeHistoricalPanel').style.display = mode === 'historical' ? 'block' : 'none';
+    document.getElementById('modeLivePanel').style.display = mode === 'live' ? 'block' : 'none';
+
+    document.getElementById('step3HistoricalPanel').style.display = mode === 'historical' ? 'block' : 'none';
+    document.getElementById('step3LivePanel').style.display = mode === 'live' ? 'block' : 'none';
+
+    document.getElementById('step3Title').textContent = mode === 'historical' ? 'Run Data Ingestion' : 'Monitor Live Events';
+    document.getElementById('step3Sub').textContent = mode === 'historical' ? 'Pull your Amplitude data into Kaliper for auditing' : 'Watch your data stream in real time';
+
+    if (mode === 'live') {
+      const url = `${API}/webhook/segment?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`;
+      document.getElementById('webhookUrlDisplay').value = url;
+    }
+  }
+
+  function copyWebhookUrl() {
+    const el = document.getElementById('webhookUrlDisplay');
+    el.select();
+    document.execCommand('copy');
+    const btn = document.getElementById('copyWebhookBtn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy URL', 2000);
+  }
+
+  function markWebhookDone() {
+    setMsg('webhookLiveMsg', '✓ Segment webhook configured.', false);
+    unlockStep(3);
+  }
+
+  async function saveConnector() {
+    const api_key = document.getElementById('ampApiKey').value.trim();
+    const secret_key = document.getElementById('ampSecretKey').value.trim();
+    if (!api_key || !secret_key) {
+      setMsg('connectorMsg', '⚠ Both API Key and Secret Key are required.', true);
+      return;
+    }
+    const btn = document.getElementById('saveConnectorBtn');
+    btn.disabled = true;
+    btn.textContent = 'Registering...';
+
+    try {
+      const res = await fetch(`${API}/config/connector?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ api_key, secret_key })
+      }).then(r => r.json());
+      if (res.success) {
+        setMsg('connectorMsg', '✓ Connector registered.', false);
+        markStepDone(2);
+        unlockStep(3);
+      } else {
+        setMsg('connectorMsg', '✗ ' + (res.error || 'Registration failed.'), true);
+        btn.disabled = false;
+        btn.textContent = 'Register Connector';
+      }
+    } catch {
+      setMsg('connectorMsg', '✗ Cannot reach server. Is the ingestion server running?', true);
+      btn.disabled = false;
+      btn.textContent = 'Register Connector';
+    }
+  }
+
+  let progressInterval = null;
+  async function startIngestion() {
+    const btn = document.getElementById('startIngestionBtn');
+    btn.disabled = true;
+    btn.textContent = 'Starting...';
+    document.getElementById('ingestionProgressWrap').style.display = 'block';
+    document.getElementById('ingestionStatus').textContent = 'Connecting...';
+    document.getElementById('ingestionBar').style.width = '0%';
+    document.getElementById('ingestionBar').style.background = 'var(--accent)';
+    document.getElementById('ingestionPct').textContent = '0%';
+    setMsg('ingestionMsg', '', false);
+
+    try {
+      const res = await fetch(`${API}/trigger-ingestion?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`, {
+        method: 'POST'
+      }).then(r => r.json());
+      if (res.success) {
+        document.getElementById('ingestionStatus').textContent = 'Ingestion running...';
+        if (progressInterval) clearInterval(progressInterval);
+        progressInterval = setInterval(pollProgress, 1500);
+      } else {
+        setMsg('ingestionMsg', '✗ Failed to start: ' + (res.error || 'Unknown error'), true);
+        document.getElementById('ingestionBar').style.background = 'var(--red)';
+        btn.disabled = false;
+        btn.textContent = '▶ Start Ingestion';
+      }
+    } catch {
+      setMsg('ingestionMsg', '✗ Cannot reach server. Is the ingestion server running?', true);
+      document.getElementById('ingestionBar').style.background = 'var(--red)';
+      btn.disabled = false;
+      btn.textContent = '▶ Start Ingestion';
+    }
+  }
+
+  async function pollProgress() {
+    try {
+      const res = await fetch(`${API}/ingestion-progress?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`).then(r => r.json());
+      if (res.status === 'idle') return;
+      const pct = res.total > 0 ? Math.round((res.current / res.total) * 100) : 5;
+      document.getElementById('ingestionBar').style.width = pct + '%';
+      document.getElementById('ingestionPct').textContent = pct + '%';
+      if (res.status === 'running') {
+        document.getElementById('ingestionStatus').textContent = `Fetching slice ${res.current} of ${res.total}...`;
+      } else if (res.status === 'done') {
+        document.getElementById('ingestionStatus').textContent = '✓ Ingestion complete!';
+        document.getElementById('ingestionBar').style.background = 'var(--green)';
+        document.getElementById('ingestionPct').textContent = '100%';
+        document.getElementById('ingestionBar').style.width = '100%';
+        clearInterval(progressInterval);
+        markStepDone(3);
+        setMsg('ingestionMsg', '✓ All done! Head to Overview to see your results.', false);
+      } else if (res.status === 'error') {
+        document.getElementById('ingestionStatus').textContent = '✗ Error during ingestion.';
+        document.getElementById('ingestionBar').style.background = 'var(--red)';
+        document.getElementById('startIngestionBtn').disabled = false;
+        document.getElementById('startIngestionBtn').textContent = '▶ Start Ingestion';
+        clearInterval(progressInterval);
+      }
+    } catch { /* ignore polling errors */ }
+  }
+
+  async function uploadToCompare(input) {
+    if (!input.files.length) return;
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const json = JSON.parse(e.target.result);
+        const res = await fetch(`${API}/upload-plan?tenant_id=${TENANT}&workspace_id=${WORKSPACE}&activate=false`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(json)
+        }).then(r => r.json());
+        if (res.success) {
+          await loadPlan();
+          document.getElementById('diffTargetSelect').value = res.plan_version_id;
+          runDiff();
+        } else {
+          alert("Upload failed: " + res.error);
+        }
+      } catch (err) {
+        alert("Invalid JSON file: " + err.message);
+      }
+    };
+    reader.readAsText(file);
+    input.value = '';
+  }
+
+  async function setPlanActive(versionId) {
+    if (!confirm("Are you sure you want to set this version as the active tracking plan for the workspace?")) return;
+    try {
+      const res = await fetch(`${API}/plan-activate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenant_id: TENANT, workspace_id: WORKSPACE, version_id: versionId })
+      }).then(r => r.json());
+      if (res.success) {
+        switchPage('overview');
+        loadAll();
+      } else {
+        alert("Activation failed: " + res.message);
+      }
+    } catch(err) {
+      alert("Error: " + err.message);
+    }
+  }
+
+  async function clearHistory() {
+    if (!confirm("Are you sure you want to clear all history for " + WORKSPACE + "? This cannot be undone.")) return;
+    try {
+      await fetch(`${API}/clear-history`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenant_id: TENANT, workspace_id: WORKSPACE })
+      });
+      loadAll();
+    } catch (e) {
+      alert("Failed to clear history: " + e.message);
+    }
+  }
+
+  // ── UPLOAD PAGE: restore state from server on every visit ──
+  async function loadUploadPage() {
+    // Reset visual state first so we don't show stale in-memory marks
+    // (the DOM persists across page switches; we re-derive truth from the server)
+    [1,2,3].forEach(n => {
+      const badge = document.getElementById('step'+n+'Badge');
+      badge.textContent = n;
+      badge.classList.remove('step-badge-done');
+      document.getElementById('step'+n+'Card').classList.remove('setup-step-done');
+    });
+    // Re-lock steps 2 & 3
+    [2,3].forEach(n => {
+      const card = document.getElementById('step'+n+'Card');
+      card.classList.add('setup-step-locked');
+      card.querySelectorAll('input, button').forEach(el => el.disabled = true);
+    });
+    // Reset step 1 body to upload zone (in case it was replaced by a status banner)
+    const step1Body = document.getElementById('step1Body');
+    if (!step1Body.querySelector('#planFileInput')) {
+      step1Body.innerHTML = `
+        <label class="file-drop" id="fileDrop" for="planFileInput">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span id="fileLabel">Choose file or drag here</span>
+          <span style="font-size:0.7rem;color:var(--text-3);margin-top:2px;">.json or .xlsx</span>
+          <input type="file" id="planFileInput" accept=".json,.xlsx" style="display:none;" onchange="onFileChosen(this)" />
+        </label>
+        <button class="btn-accent" id="uploadPlanBtn" style="width:100%;margin-top:10px;" onclick="uploadPlan()" disabled>Upload Plan</button>
+        <div id="planUploadMsg" class="setup-msg"></div>`;
+    }
+
+    // Check server for active plan
+    try {
+      const planRes = await fetch(`${API}/plan-active?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`);
+      const plan = await planRes.json();
+      const hasPlan = planRes.ok && !plan.error;
+
+      if (hasPlan) {
+        // Mark step 1 done and show which plan is active
+        markStepDone(1);
+        const sub = document.querySelector('#step1Card .step-sub');
+        if (sub) sub.textContent = `Active: ${plan.version || plan.file_name || ('Plan #' + plan.id)} · ${plan.event_count ?? '?'} events`;
+        // Re-enable upload zone so they can replace the plan
+        document.getElementById('uploadPlanBtn').disabled = false;
+        setMsg('planUploadMsg', '✓ A plan is already active for this workspace. Upload a new file to replace it.', false);
+        unlockStep(2);
+      }
+    } catch(e) { /* server not reachable, leave steps as-is */ }
+
+    // Check server for existing connector
+    try {
+      const connRes = await fetch(`${API}/config/connector?tenant_id=${TENANT}&workspace_id=${WORKSPACE}`);
+      if (connRes.ok) {
+        const conn = await connRes.json();
+        if (conn && (conn.api_key || conn.has_connector)) {
+          markStepDone(2);
+          unlockStep(3);
+        }
+      }
+    } catch(e) { /* ignore */ }
+  }
+
   function loadAll() {
     loadPage(currentPage);
     document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString('en-IN');
   }
 
-  loadWorkspaces().then(() => loadAll());
-  setInterval(loadAll, 30000);
+  restoreSession();
+  setInterval(() => { if (TENANT) loadAll(); }, 30000);
   window.addEventListener('resize', () => {
     if (currentPage === 'overview') loadOverview();
     if (currentPage === 'trends') loadTrends();

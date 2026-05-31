@@ -110,6 +110,8 @@ DEFAULT_CONTEXT = RuntimeContext(
 )
 
 initialize_db()
+from core.connector_registry import initialize_connector_tables
+initialize_connector_tables()
 
 WORKSPACE_RUNTIMES: dict[str, dict[str, Any]] = {}
 
@@ -262,6 +264,137 @@ def home():
     })
 
 
+@app.route("/upload-plan", methods=["POST"])
+def upload_plan():
+    tenant_id, workspace_id = _require_workspace_params()
+    if not tenant_id:
+        tenant_id = DEFAULT_CONTEXT.tenant_id
+    if not workspace_id:
+        workspace_id = DEFAULT_CONTEXT.workspace_id
+
+    _ensure_workspace_records(tenant_id, workspace_id, DEFAULT_CONTEXT.tenant_name)
+
+    activate_str = request.args.get("activate", "true").lower()
+    make_active = activate_str == "true"
+
+    from core.plan_registry import register_plan_from_file, register_plan_from_dict
+    import tempfile
+    import os
+
+    file = request.files.get("file")
+    data = request.get_json(silent=True)
+
+    try:
+        if not file and not data and workspace_id == "ecommerce_workspace":
+            # Auto-load the default tracking plan if none provided
+            default_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "sample_data", "tracking_plan_ecommerce.json")
+            if os.path.exists(default_path):
+                with open(default_path, "r", encoding="utf-8") as f:
+                    plan_data = json.load(f)
+                registered = register_plan_from_dict(
+                    tenant_id=tenant_id,
+                    workspace_id=workspace_id,
+                    plan_data=plan_data,
+                    make_active=make_active,
+                )
+                return jsonify({"success": True, "plan_version_id": registered.plan_version_id})
+
+        if file:
+            filename = file.filename.lower()
+            if filename.endswith(".json"):
+                plan_data = json.load(file)
+                registered = register_plan_from_dict(
+                    tenant_id=tenant_id,
+                    workspace_id=workspace_id,
+                    plan_data=plan_data,
+                    make_active=make_active,
+                )
+            elif filename.endswith(".xlsx") or filename.endswith(".xlsm"):
+                fd, temp_path = tempfile.mkstemp(suffix=".xlsx")
+                try:
+                    with os.fdopen(fd, "wb") as f:
+                        file.save(f)
+                    registered = register_plan_from_file(
+                        tenant_id=tenant_id,
+                        workspace_id=workspace_id,
+                        plan_path=temp_path,
+                        make_active=make_active,
+                    )
+                finally:
+                    os.remove(temp_path)
+            else:
+                return jsonify({"error": "Unsupported file type. Must be .json or .xlsx"}), 400
+        elif data:
+            registered = register_plan_from_dict(
+                tenant_id=tenant_id,
+                workspace_id=workspace_id,
+                plan_data=data,
+                make_active=make_active,
+            )
+        else:
+            return jsonify({"error": "No JSON payload or file provided"}), 400
+
+        # Clear any cached runtime for this workspace so the new plan takes effect
+        if make_active:
+            prefix = f"{tenant_id}:{workspace_id}:"
+            keys_to_delete = [k for k in WORKSPACE_RUNTIMES if k.startswith(prefix)]
+            for k in keys_to_delete:
+                _finalize_runtime(WORKSPACE_RUNTIMES[k])
+                del WORKSPACE_RUNTIMES[k]
+
+        return jsonify({
+            "success": True,
+            "plan_version_id": registered.plan_version_id,
+            "domain": registered.domain
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/plan-activate", methods=["POST"])
+@require_auth
+def activate_plan(authenticated_tenant_id: str | None = None):
+    data = request.get_json(silent=True) or {}
+    tenant_id = data.get("tenant_id", DEFAULT_CONTEXT.tenant_id)
+    workspace_id = data.get("workspace_id", DEFAULT_CONTEXT.workspace_id)
+    version_id = data.get("version_id")
+
+    if not version_id:
+        return jsonify({"error": "version_id is required"}), 400
+
+    if authenticated_tenant_id and tenant_id != authenticated_tenant_id:
+        return jsonify({"success": False, "message": "Tenant mismatch."}), 403
+
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        row = cur.execute(
+            "SELECT id FROM plan_versions WHERE id = ? AND tenant_id = ? AND workspace_id = ?",
+            (version_id, tenant_id, workspace_id)
+        ).fetchone()
+        if not row:
+            conn.close()
+            return jsonify({"error": "Plan version not found."}), 404
+    finally:
+        conn.close()
+
+    from core.plan_registry import set_active_plan_version
+    set_active_plan_version(
+        tenant_id=tenant_id,
+        workspace_id=workspace_id,
+        plan_version_id=int(version_id),
+    )
+
+    # Clear runtime cache so it reloads on next event
+    prefix = f"{tenant_id}:{workspace_id}:"
+    keys_to_delete = [k for k in WORKSPACE_RUNTIMES if k.startswith(prefix)]
+    for k in keys_to_delete:
+        _finalize_runtime(WORKSPACE_RUNTIMES[k])
+        del WORKSPACE_RUNTIMES[k]
+
+    return jsonify({"success": True})
+
+
 @app.route("/ingest", methods=["POST"])
 @require_auth
 def ingest(authenticated_tenant_id: str | None = None):
@@ -314,6 +447,8 @@ def ingest(authenticated_tenant_id: str | None = None):
         runtime["specs"],
         enabled_checks=runtime["profile"].enabled_checks,
         state=runtime["state"],
+        funnel_map=runtime["profile"].funnel_map,
+        property_map=runtime["profile"].property_map,
     )
 
     for issue in issues:
@@ -491,6 +626,29 @@ def scorecard():
             run_id=int(run_id) if run_id else None,
         )
         return jsonify(sc.to_dict())
+    except ValueError:
+        # No runs yet — return an empty scorecard instead of a 500
+        return jsonify({
+            "tenant_id": tenant_id,
+            "workspace_id": workspace_id,
+            "run_id": None,
+            "mode": None,
+            "domain": None,
+            "confidence": 0,
+            "plan_version_id": None,
+            "label": None,
+            "started_at": None,
+            "ended_at": None,
+            "event_count": 0,
+            "issue_count": 0,
+            "health_score": 0,
+            "grade": "-",
+            "severity_counts": {},
+            "issue_type_counts": {},
+            "affected_events": [],
+            "top_issue_types": [],
+            "notes": ["No ingestion runs yet. Upload a tracking plan, register your connector, and start ingestion."],
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -513,6 +671,18 @@ def summary():
             "issue_count": sc.issue_count,
             "severity_counts": sc.severity_counts,
             "top_issue_types": sc.top_issue_types,
+        })
+    except ValueError:
+        return jsonify({
+            "tenant_id": tenant_id,
+            "workspace_id": workspace_id,
+            "run_id": None,
+            "health_score": 0,
+            "grade": "-",
+            "event_count": 0,
+            "issue_count": 0,
+            "severity_counts": {},
+            "top_issue_types": [],
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -591,6 +761,104 @@ def issue_breakdown():
         return jsonify(get_issue_type_breakdown(tenant_id, workspace_id, limit_runs=limit_runs))
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+# ---------------------------------------------------------------------------
+# Connector Configuration and UI Ingestion
+# ---------------------------------------------------------------------------
+
+@app.route("/config/connector", methods=["GET", "POST"])
+@require_auth
+def config_connector(authenticated_tenant_id: str | None = None):
+    if request.method == "GET":
+        tenant_id, workspace_id = _require_workspace_params()
+        if not tenant_id: tenant_id = DEFAULT_CONTEXT.tenant_id
+        if not workspace_id: workspace_id = DEFAULT_CONTEXT.workspace_id
+        from core.connector_registry import list_connectors
+        try:
+            connectors = list_connectors(tenant_id=tenant_id, workspace_id=workspace_id)
+            amplitude = next((c for c in connectors if c["connector_type"] == "amplitude" and c["is_active"]), None)
+            if amplitude:
+                return jsonify({"has_connector": True, "connector_name": amplitude.get("connector_name")})
+            return jsonify({"has_connector": False}), 404
+        except Exception as e:
+            return jsonify({"has_connector": False, "error": str(e)}), 404
+    tenant_id, workspace_id = _require_workspace_params()
+    if not tenant_id: tenant_id = DEFAULT_CONTEXT.tenant_id
+    if not workspace_id: workspace_id = DEFAULT_CONTEXT.workspace_id
+
+    data = request.get_json(silent=True) or {}
+    api_key = data.get("api_key")
+    secret_key = data.get("secret_key")
+
+    if not api_key or not secret_key:
+        return jsonify({"error": "api_key and secret_key are required"}), 400
+
+    from core.connector_registry import register_connector, list_connectors, deactivate_connector
+    try:
+        # Deactivate any existing active connector for this workspace before
+        # registering a new one — prevents the same accumulation bug that
+        # caused connectors 1-3 to pile up.
+        existing = list_connectors(tenant_id=tenant_id, workspace_id=workspace_id)
+        for c in existing:
+            if c["connector_type"] == "amplitude" and c["is_active"]:
+                deactivate_connector(c["id"])
+        register_connector(
+            tenant_id=tenant_id,
+            workspace_id=workspace_id,
+            connector_name=f"Amplitude - {workspace_id}",
+            connector_type="amplitude",
+            credentials={
+                "api_key": api_key,
+                "secret_key": secret_key,
+            },
+            config={
+                "poll_interval_minutes": 1440,
+                "environment": "production",
+            },
+            is_active=True,
+        )
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/trigger-ingestion", methods=["POST"])
+@require_auth
+def trigger_ingestion(authenticated_tenant_id: str | None = None):
+    tenant_id, workspace_id = _require_workspace_params()
+    if not workspace_id: workspace_id = DEFAULT_CONTEXT.workspace_id
+
+    import threading
+    def bg_task():
+        try:
+            # We run it as a script to let scheduler do its thing. 
+            # Alternatively, import run_scheduler
+            import sys
+            from pathlib import Path
+            project_root = str(Path(__file__).resolve().parent.parent)
+            if project_root not in sys.path:
+                sys.path.insert(0, project_root)
+            from scheduler import run_scheduler
+            run_scheduler(run_once=True)
+        except Exception as e:
+            print(f"Background ingestion failed: {e}")
+            from core.progress_store import update_progress
+            update_progress(workspace_id, "error", 0, 0)
+
+    t = threading.Thread(target=bg_task)
+    t.start()
+    return jsonify({"success": True, "message": "Ingestion started in background"})
+
+
+@app.route("/ingestion-progress", methods=["GET"])
+def ingestion_progress():
+    tenant_id, workspace_id = _require_workspace_params()
+    if not workspace_id: workspace_id = DEFAULT_CONTEXT.workspace_id
+    
+    from core.progress_store import get_progress
+    progress = get_progress(workspace_id)
+    return jsonify(progress)
 
 
 # ---------------------------------------------------------------------------
@@ -727,7 +995,7 @@ def plan_active():
             "plan_path": active_plan["plan_path"],
             "created_at": active_plan["created_at"],
             "confidence": profile.confidence,
-            "enabled_checks": profile.enabled_checks,
+            "enabled_checks": list(profile.enabled_checks),
             "events": [_serialize_spec(s) for s in specs],
             "event_count": len(specs),
         })
@@ -829,6 +1097,8 @@ def clear_events(authenticated_tenant_id: str | None = None):
     key = _workspace_key(tenant_id, workspace_id, environment)
     runtime = WORKSPACE_RUNTIMES.get(key)
 
+    label = data.get("label")
+
     if runtime:
         _finalize_runtime(runtime)
         runtime["state"] = StreamState()
@@ -842,6 +1112,7 @@ def clear_events(authenticated_tenant_id: str | None = None):
             domain=runtime["profile"].domain,
             confidence=runtime["profile"].confidence,
             plan_version_id=runtime["active_plan_version_id"],
+            label=label,
         )
         _persist_run_counters(runtime)
 
@@ -852,6 +1123,141 @@ def clear_events(authenticated_tenant_id: str | None = None):
         "workspace_id": workspace_id,
         "environment": environment,
         "new_run_id": runtime["run_id"] if runtime else None,
+    })
+
+
+@app.route("/clear-history", methods=["POST"])
+@require_auth
+def clear_history(authenticated_tenant_id: str | None = None):
+    data = request.get_json(silent=True) or {}
+    tenant_id = data.get("tenant_id", DEFAULT_CONTEXT.tenant_id)
+    workspace_id = data.get("workspace_id", DEFAULT_CONTEXT.workspace_id)
+    environment = data.get("environment", DEFAULT_CONTEXT.environment)
+
+    if authenticated_tenant_id and tenant_id != authenticated_tenant_id:
+        return jsonify({
+            "success": False,
+            "message": "Tenant mismatch."
+        }), 403
+
+    from core.storage import clear_workspace_history
+    clear_workspace_history(tenant_id, workspace_id)
+
+    key = _workspace_key(tenant_id, workspace_id, environment)
+    runtime = WORKSPACE_RUNTIMES.get(key)
+    if runtime:
+        _finalize_runtime(runtime)
+        del WORKSPACE_RUNTIMES[key]
+
+    return jsonify({"success": True})
+
+
+# ---------------------------------------------------------------------------
+# Webhook receiver routes (Segment, RudderStack, generic)
+# ---------------------------------------------------------------------------
+from connectors.webhook_receiver import register_webhook_routes
+register_webhook_routes(app)
+
+
+# ---------------------------------------------------------------------------
+# Auth: tenant login for the dashboard
+# ---------------------------------------------------------------------------
+
+@app.route("/auth/login", methods=["POST"])
+def auth_login():
+    """
+    POST /auth/login
+    Body: {"tenant_id": "...", "api_key": "..."}
+
+    Validates an API key against the tenant registry and returns the
+    tenant_id + list of workspaces on success.
+    Used by the dashboard login screen to bootstrap the session.
+
+    When AUTH_ENABLED=False (no KALIPER_API_KEY_* env vars), any tenant_id
+    is accepted without a key — development mode only.
+    """
+    data = request.get_json(silent=True) or {}
+    tenant_id = (data.get("tenant_id") or "").strip()
+    api_key   = (data.get("api_key")   or "").strip()
+
+    if not tenant_id:
+        return jsonify({"success": False, "message": "tenant_id is required."}), 400
+
+    if AUTH_ENABLED:
+        # Validate the key and confirm it belongs to the claimed tenant
+        resolved = API_KEYS.get(api_key)
+        if not resolved:
+            return jsonify({"success": False, "message": "Invalid API key."}), 401
+        if resolved != tenant_id:
+            return jsonify({"success": False, "message": "API key does not belong to this tenant."}), 403
+    # else: dev mode — accept any tenant_id without a key
+
+    # Return workspaces so the dashboard can populate the switcher immediately
+    conn = get_connection()
+    cur  = conn.cursor()
+    rows = cur.execute(
+        "SELECT workspace_id, workspace_name FROM workspaces WHERE tenant_id = ? ORDER BY workspace_id",
+        (tenant_id,),
+    ).fetchall()
+    conn.close()
+
+    workspaces = [dict(r) for r in rows]
+
+    return jsonify({
+        "success":    True,
+        "tenant_id":  tenant_id,
+        "auth_mode":  "authenticated" if AUTH_ENABLED else "dev",
+        "workspaces": workspaces,
+    })
+
+
+@app.route("/auth/me", methods=["GET"])
+def auth_me():
+    """
+    GET /auth/me
+    Header: X-Kaliper-API-Key: <key>  (or Authorization: Bearer <key>)
+
+    Returns the tenant identity for a given API key.
+    Used by the dashboard on page load to restore a session.
+    """
+    if not AUTH_ENABLED:
+        # Dev mode — read tenant_id from query param, no key needed
+        tenant_id = request.args.get("tenant_id", DEFAULT_CONTEXT.tenant_id)
+        conn = get_connection()
+        cur  = conn.cursor()
+        rows = cur.execute(
+            "SELECT workspace_id, workspace_name FROM workspaces WHERE tenant_id = ? ORDER BY workspace_id",
+            (tenant_id,),
+        ).fetchall()
+        conn.close()
+        return jsonify({
+            "success":    True,
+            "tenant_id":  tenant_id,
+            "auth_mode":  "dev",
+            "workspaces": [dict(r) for r in rows],
+        })
+
+    api_key = (
+        request.headers.get("X-Kaliper-API-Key")
+        or request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
+    )
+    tenant_id = API_KEYS.get(api_key)
+    if not tenant_id:
+        return jsonify({"success": False, "message": "Invalid or missing API key."}), 401
+
+    conn = get_connection()
+    cur  = conn.cursor()
+    rows = cur.execute(
+        "SELECT workspace_id, workspace_name FROM workspaces WHERE tenant_id = ? ORDER BY workspace_id",
+        (tenant_id,),
+    ).fetchall()
+    conn.close()
+
+    return jsonify({
+        "success":    True,
+        "tenant_id":  tenant_id,
+        "auth_mode":  "authenticated",
+        "workspaces": [dict(r) for r in rows],
     })
 
 

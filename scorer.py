@@ -36,6 +36,7 @@ class RunScorecard:
     domain: str
     confidence: float
     plan_version_id: Optional[int]
+    label: Optional[str]
     started_at: str
     ended_at: Optional[str]
     event_count: int
@@ -85,36 +86,50 @@ def _get_latest_run_row(
     return dict(row) if row else None
 
 
-def _get_issues_for_run(run_id: int) -> list[dict[str, Any]]:
+def _get_severity_counts(run_id: int) -> dict[str, int]:
     conn = get_connection()
     cur = conn.cursor()
-
     rows = cur.execute(
-        """
-        SELECT *
-        FROM issues
-        WHERE run_id = ?
-        ORDER BY id ASC
-        """,
-        (run_id,),
+        "SELECT lower(severity) as sev, COUNT(*) as count FROM issues WHERE run_id = ? GROUP BY lower(severity)",
+        (run_id,)
     ).fetchall()
-
     conn.close()
-    return [dict(row) for row in rows]
+    return {row["sev"] or "unknown": row["count"] for row in rows}
 
 
-def _score_from_issues(event_count: int, issues: list[dict[str, Any]]) -> int:
+def _get_issue_type_counts(run_id: int) -> dict[str, int]:
+    conn = get_connection()
+    cur = conn.cursor()
+    rows = cur.execute(
+        "SELECT issue_type, COUNT(*) as count FROM issues WHERE run_id = ? GROUP BY issue_type",
+        (run_id,)
+    ).fetchall()
+    conn.close()
+    return {row["issue_type"] or "unknown": row["count"] for row in rows}
+
+
+def _get_affected_events(run_id: int) -> list[str]:
+    conn = get_connection()
+    cur = conn.cursor()
+    rows = cur.execute(
+        "SELECT DISTINCT event_name FROM issues WHERE run_id = ? AND event_name IS NOT NULL ORDER BY event_name",
+        (run_id,)
+    ).fetchall()
+    conn.close()
+    return [row["event_name"] for row in rows]
+
+
+def _score_from_counts(event_count: int, issue_count: int, severity_counts: dict[str, int]) -> int:
     score = 100
 
-    for issue in issues:
-        severity = (issue.get("severity") or "").lower()
-        score -= SEVERITY_WEIGHTS.get(severity, 4)
+    for severity, count in severity_counts.items():
+        score -= SEVERITY_WEIGHTS.get(severity, 4) * count
 
     if event_count > 0:
-        density = len(issues) / event_count
+        density = issue_count / event_count
         score -= min(20, int(round(density * 10)))
 
-    if any((issue.get("severity") or "").lower() == "critical" for issue in issues):
+    if severity_counts.get("critical", 0) > 0:
         score -= 5
 
     return max(0, min(100, int(round(score))))
@@ -138,53 +153,50 @@ def build_scorecard(
             f"No run found for tenant_id='{tenant_id}', workspace_id='{workspace_id}'."
         )
 
-    issues = _get_issues_for_run(int(run["id"]))
+    r_id = int(run["id"])
+    severity_counts = _get_severity_counts(r_id)
+    issue_type_counts = _get_issue_type_counts(r_id)
+    affected_events = _get_affected_events(r_id)
 
-    severity_counts = Counter((issue.get("severity") or "unknown").lower() for issue in issues)
-    issue_type_counts = Counter((issue.get("issue_type") or "unknown") for issue in issues)
-    affected_events = sorted(
-        {
-            issue.get("event_name")
-            for issue in issues
-            if issue.get("event_name")
-        }
-    )
+    event_count = int(run["event_count"] or 0)
+    issue_count = int(run["issue_count"] or 0)
 
-    health_score = _score_from_issues(int(run["event_count"] or 0), issues)
+    health_score = _score_from_counts(event_count, issue_count, severity_counts)
     grade = _grade_from_score(health_score)
 
     top_issue_types = [
         {"issue_type": issue_type, "count": count}
-        for issue_type, count in issue_type_counts.most_common(5)
+        for issue_type, count in Counter(issue_type_counts).most_common(5)
     ]
 
     notes: list[str] = []
-    if run["issue_count"] == 0:
+    if issue_count == 0:
         notes.append("No issues detected in this run.")
     else:
         if severity_counts.get("critical", 0) > 0:
             notes.append("Critical issues were detected.")
         if severity_counts.get("high", 0) > 0:
             notes.append("High-severity issues require attention.")
-        if int(run["event_count"] or 0) > 0 and len(issues) / int(run["event_count"]) > 0.5:
+        if event_count > 0 and (issue_count / event_count) > 0.5:
             notes.append("Issue density is high relative to total event volume.")
 
     return RunScorecard(
         tenant_id=run["tenant_id"],
         workspace_id=run["workspace_id"],
-        run_id=int(run["id"]),
+        run_id=r_id,
         mode=run["mode"],
         domain=run["domain"],
         confidence=float(run["confidence"]),
         plan_version_id=run["plan_version_id"],
+        label=run.get("label"),
         started_at=run["started_at"],
         ended_at=run["ended_at"],
-        event_count=int(run["event_count"] or 0),
-        issue_count=int(run["issue_count"] or 0),
+        event_count=event_count,
+        issue_count=issue_count,
         health_score=health_score,
         grade=grade,
-        severity_counts=dict(severity_counts),
-        issue_type_counts=dict(issue_type_counts),
+        severity_counts=severity_counts,
+        issue_type_counts=issue_type_counts,
         affected_events=affected_events,
         top_issue_types=top_issue_types,
         notes=notes,

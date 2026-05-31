@@ -8,9 +8,9 @@ from uuid import uuid4
 
 from core.plan_analyzer import analyze_tracking_plan, PlanProfile
 from core.plan_diff import PlanDiffResult, compare_tracking_plans
-from core.plan_loader import load_tracking_plan
+from core.plan_loader import load_tracking_plan, load_tracking_plan_from_dict
 from core.plan_normalizer import normalize_specs
-from core.schemas import TrackingEventSpec
+from core.schemas import TrackingEventSpec, ConditionalRule
 from core.storage import get_connection, initialize_db, store_plan_version
 
 DB_PATH = Path(__file__).resolve().parent.parent / "kaliper.db"
@@ -63,6 +63,16 @@ def _serialize_specs(specs: list[TrackingEventSpec]) -> str:
                     "property_types": spec.property_types,
                     "identity_required": spec.identity_required,
                     "allowed_previous_events": spec.allowed_previous_events,
+                    "allowed_values": spec.allowed_values,
+                    "conditional_rules": [
+                        {
+                            "when_property": r.when_property,
+                            "when_value": r.when_value,
+                            "then_property": r.then_property,
+                            "then_allowed_values": r.then_allowed_values,
+                        }
+                        for r in spec.conditional_rules
+                    ],
                 }
                 for spec in specs
             ]
@@ -82,6 +92,17 @@ def _deserialize_specs(plan_json: str) -> list[TrackingEventSpec]:
                 property_types=event.get("property_types", {}),
                 identity_required=event.get("identity_required", False),
                 allowed_previous_events=event.get("allowed_previous_events", []),
+                allowed_values=event.get("allowed_values", {}),
+                conditional_rules=[
+                    ConditionalRule(
+                        when_property=r["when_property"],
+                        when_value=r["when_value"],
+                        then_property=r["then_property"],
+                        then_allowed_values=r.get("then_allowed_values", []),
+                    )
+                    for r in event.get("conditional_rules", [])
+                    if isinstance(r, dict)
+                ],
             )
         )
 
@@ -133,6 +154,52 @@ def register_plan_from_file(
         workspace_id=workspace_id,
         version=version,
         plan_path=plan_path,
+        domain=profile.domain,
+        created_at=datetime.now(timezone.utc).isoformat(),
+        is_active=make_active,
+    )
+
+
+def register_plan_from_dict(
+    *,
+    tenant_id: str,
+    workspace_id: str,
+    plan_data: dict,
+    version_prefix: str = "plan",
+    make_active: bool = True,
+) -> RegisteredPlan:
+    _ensure_registry_tables()
+
+    raw_specs = load_tracking_plan_from_dict(plan_data)
+    normalized_specs = normalize_specs(raw_specs)
+    profile = analyze_tracking_plan(normalized_specs)
+
+    version = _utc_version_label(version_prefix)
+    plan_json = _serialize_specs(normalized_specs)
+
+    plan_version_id = store_plan_version(
+        tenant_id=tenant_id,
+        workspace_id=workspace_id,
+        version=version,
+        plan_path="api_upload_json",
+        domain=profile.domain,
+        plan_json=plan_json,
+        db_path=DB_PATH,
+    )
+
+    if make_active:
+        set_active_plan_version(
+            tenant_id=tenant_id,
+            workspace_id=workspace_id,
+            plan_version_id=plan_version_id,
+        )
+
+    return RegisteredPlan(
+        plan_version_id=plan_version_id,
+        tenant_id=tenant_id,
+        workspace_id=workspace_id,
+        version=version,
+        plan_path="api_upload_json",
         domain=profile.domain,
         created_at=datetime.now(timezone.utc).isoformat(),
         is_active=make_active,

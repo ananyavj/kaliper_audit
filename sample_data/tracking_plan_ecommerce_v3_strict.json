@@ -1,0 +1,88 @@
+{
+  "events": [
+    {
+      "name": "Page Viewed",
+      "required_properties": ["page_url", "session_id"],
+      "property_types": { "page_url": "string", "session_id": "string" },
+      "identity_required": false,
+      "allowed_previous_events": []
+    },
+    {
+      "name": "Product Viewed",
+      "required_properties": ["product_id", "title", "price", "category"],
+      "property_types": { "product_id": "string", "title": "string", "price": "number", "category": "string" },
+      "identity_required": true,
+      "allowed_previous_events": ["Page Viewed"],
+      "allowed_values": { "category": ["Clothing", "Electronics", "Books", "Home", "Footwear"] }
+    },
+    {
+      "name": "Product Added",
+      "required_properties": ["product_id", "quantity", "price"],
+      "property_types": { "product_id": "string", "quantity": "number", "price": "number" },
+      "identity_required": true,
+      "allowed_previous_events": ["Product Viewed"]
+    },
+    {
+      "name": "Wishlist Added",
+      "required_properties": ["product_id"],
+      "property_types": { "product_id": "string" },
+      "identity_required": true,
+      "allowed_previous_events": ["Product Viewed"]
+    },
+    {
+      "name": "Coupon Applied",
+      "required_properties": ["coupon_code", "discount_amount"],
+      "property_types": { "coupon_code": "string", "discount_amount": "number" },
+      "identity_required": true,
+      "allowed_previous_events": ["Checkout Started"]
+    },
+    {
+      "name": "Checkout Started",
+      "required_properties": ["cart_id", "revenue", "currency"],
+      "property_types": { "cart_id": "string", "revenue": "number", "currency": "string" },
+      "identity_required": true,
+      "allowed_previous_events": ["Product Added"],
+      "allowed_values": { "currency": ["INR", "USD"] }
+    },
+    {
+      "name": "Checkout Step Viewed",
+      "required_properties": ["cart_id", "step"],
+      "property_types": { "cart_id": "string", "step": "number" },
+      "identity_required": true,
+      "allowed_previous_events": ["Checkout Started"]
+    },
+    {
+      "name": "Order Completed",
+      "required_properties": ["order_id", "revenue", "currency", "payment_method"],
+      "property_types": { "order_id": "string", "revenue": "number", "currency": "string", "payment_method": "string" },
+      "identity_required": true,
+      "allowed_previous_events": ["Checkout Started"],
+      "allowed_values": {
+        "currency": ["INR", "USD"],
+        "payment_method": ["upi", "card", "netbanking", "cod", "wallet"]
+      },
+      "conditional_rules": [
+        {
+          "when_property": "payment_method",
+          "when_value": "upi",
+          "then_property": "upi_app",
+          "then_allowed_values": ["gpay", "phonepe", "paytm", "bhim"]
+        },
+        {
+          "when_property": "payment_method",
+          "when_value": "cod",
+          "then_property": "cod_confirmed",
+          "then_allowed_values": []
+        }
+      ]
+    },
+    {
+      "name": "Order Refunded",
+      "required_properties": ["order_id", "refund_amount", "reason"],
+      "property_types": { "order_id": "string", "refund_amount": "number", "reason": "string" },
+      "identity_required": true,
+      "allowed_previous_events": ["Order Completed"],
+      "allowed_values": { "reason": ["wrong_item", "damaged", "not_delivered", "quality_issue", "changed_mind"] }
+    }
+  ]
+}

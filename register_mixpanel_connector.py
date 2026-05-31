@@ -81,7 +81,7 @@ def register_for_workspace(workspace_id: str) -> int:
             "project_id": project_id,
         },
         config={
-            "poll_interval_minutes": 60,   # Mixpanel export has daily granularity
+            "poll_interval_minutes": 1440,   # Mixpanel export has daily granularity
             "environment": cfg["environment"],
         },
         is_active=True,

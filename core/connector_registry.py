@@ -16,7 +16,7 @@ def utc_now() -> str:
 # Checkpoint table — tracks incremental sync state per connector
 # ---------------------------------------------------------------------------
 
-DEFAULT_LOOKBACK_HOURS = 24   # how far back to start on a brand-new connector
+DEFAULT_LOOKBACK_HOURS = 720  # how far back to start on a brand-new connector (30 days)
 
 
 def initialize_checkpoint_table() -> None:
@@ -304,6 +304,42 @@ def deactivate_connector(connector_id: int) -> None:
     conn.close()
 
 
+def update_connector_credentials(
+    connector_id: int,
+    credentials: dict[str, Any],
+) -> None:
+    """
+    Replace the stored credentials for a connector without deactivating it.
+
+    Use this when the Amplitude API key has been rotated or when the connector
+    was accidentally registered with the wrong project's credentials.
+    Clears the checkpoint so the next sync re-imports from scratch rather than
+    resuming mid-stream with the new credentials (which would produce a broken
+    mix of data from two different projects).
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        UPDATE connectors
+        SET credentials_json = ?
+        WHERE id = ?
+        """,
+        (json.dumps(credentials), connector_id),
+    )
+
+    conn.commit()
+    conn.close()
+
+    # Reset checkpoint so the first sync after a credential change starts fresh
+    clear_checkpoint(connector_id)
+    print(
+        f"  Credentials updated for connector {connector_id}. "
+        "Checkpoint cleared — next sync will re-import from lookback window."
+    )
+
+
 # ---------------------------------------------------------------------------
 # Credential isolation — always use this instead of get_connector when the
 # caller is a tenant-scoped context (ingestion server, sync service, API)
@@ -326,6 +362,80 @@ def get_connector_for_tenant(
     if connector["tenant_id"] != tenant_id:
         return None
     return connector
+
+
+def delete_all_connectors(
+    tenant_id: str,
+    workspace_id: str,
+) -> int:
+    """
+    Hard-delete ALL connectors (active and inactive) for a workspace,
+    along with their checkpoints. Use this for a full clean slate.
+    Returns the number of rows deleted.
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+
+    rows = cur.execute(
+        "SELECT id FROM connectors WHERE tenant_id = ? AND workspace_id = ?",
+        (tenant_id, workspace_id),
+    ).fetchall()
+
+    ids = [row["id"] for row in rows]
+
+    if ids:
+        placeholders = ",".join("?" for _ in ids)
+        cur.execute(
+            f"DELETE FROM connector_checkpoints WHERE connector_id IN ({placeholders})",
+            ids,
+        )
+        cur.execute(
+            f"DELETE FROM connectors WHERE id IN ({placeholders})",
+            ids,
+        )
+
+    conn.commit()
+    conn.close()
+    return len(ids)
+
+
+def delete_inactive_connectors(
+    tenant_id: str,
+    workspace_id: str,
+) -> int:
+    """
+    Hard-delete all inactive connectors (and their checkpoints) for a workspace.
+    Returns the number of rows deleted.
+    Only touches connectors where is_active = 0 — the live connector is never affected.
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # Find the IDs first so we can also clean up their checkpoints
+    rows = cur.execute(
+        """
+        SELECT id FROM connectors
+        WHERE tenant_id = ? AND workspace_id = ? AND is_active = 0
+        """,
+        (tenant_id, workspace_id),
+    ).fetchall()
+
+    ids = [row["id"] for row in rows]
+
+    if ids:
+        placeholders = ",".join("?" for _ in ids)
+        cur.execute(
+            f"DELETE FROM connector_checkpoints WHERE connector_id IN ({placeholders})",
+            ids,
+        )
+        cur.execute(
+            f"DELETE FROM connectors WHERE id IN ({placeholders})",
+            ids,
+        )
+
+    conn.commit()
+    conn.close()
+    return len(ids)
 
 
 def list_all_workspaces() -> list[dict[str, str]]:

@@ -31,7 +31,9 @@ def generate_content_clean_flow(user_id="user_1", anonymous_id="anon_1"):
             timestamp=ts,
             properties={
                 "article_id": "art_1",
+                "title": "Analytics Best Practices",
                 "duration_seconds": 120,
+                "scroll_depth_pct": 85,
             },
             event_id=str(uuid4()),
         ),
@@ -42,6 +44,7 @@ def generate_content_clean_flow(user_id="user_1", anonymous_id="anon_1"):
             timestamp=ts,
             properties={
                 "video_id": "vid_1",
+                "title": "Intro to Tracking Plans",
                 "duration_seconds": 300,
             },
             event_id=str(uuid4()),
@@ -53,7 +56,9 @@ def generate_content_clean_flow(user_id="user_1", anonymous_id="anon_1"):
             timestamp=ts,
             properties={
                 "video_id": "vid_1",
+                "title": "Intro to Tracking Plans",
                 "duration_seconds": 300,
+                "watch_pct": 100,
             },
             event_id=str(uuid4()),
         ),
@@ -64,6 +69,8 @@ def generate_content_flow_with_errors():
     ts = _now()
 
     return [
+        # skip error: Article Read fires without a preceding Page Viewed.
+        # Page Viewed is intentionally omitted to trigger article_read_without_page_view.
         IncomingEvent(
             name="Article Read",
             user_id="user_1",
@@ -97,13 +104,15 @@ def generate_content_flow_with_errors():
             },
             event_id=str(uuid4()),
         ),
+        # id_mismatch error: Video Started fires with a different video_id than
+        # the Video Completed above, so the sequence is logically broken.
         IncomingEvent(
             name="Video Started",
             user_id="user_1",
             anonymous_id="anon_1",
             timestamp=ts,
             properties={
-                "video_id": "vid_1",
+                "video_id": "vid_WRONG",  # error: id_mismatch — does not match vid_1 above
                 "duration_seconds": "300",  # error: should be number
             },
             event_id=str(uuid4()),

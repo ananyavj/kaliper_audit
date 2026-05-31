@@ -15,6 +15,17 @@ def generate_clean_flow(user_id="user_1"):
 
     return [
         IncomingEvent(
+            name="Page Viewed",
+            user_id=user_id,
+            anonymous_id=anon_id,
+            timestamp=ts,
+            properties={
+                "page_url": "https://example.com/products/t-shirt",
+                "session_id": "sess_1",
+            },
+            event_id=str(uuid4()),
+        ),
+        IncomingEvent(
             name="Product Viewed",
             user_id=user_id,
             anonymous_id=anon_id,
@@ -22,6 +33,7 @@ def generate_clean_flow(user_id="user_1"):
             properties={
                 "product_id": "p1",
                 "title": "T-Shirt",
+                "price": 499.0,
             },
             event_id=str(uuid4()),
         ),
@@ -33,6 +45,7 @@ def generate_clean_flow(user_id="user_1"):
             properties={
                 "product_id": "p1",
                 "quantity": 1,
+                "price": 499.0,
             },
             event_id=str(uuid4()),
         ),
@@ -43,6 +56,8 @@ def generate_clean_flow(user_id="user_1"):
             timestamp=ts,
             properties={
                 "cart_id": "cart_1",
+                "revenue": 499.0,
+                "currency": "INR",
             },
             event_id=str(uuid4()),
         ),
@@ -87,16 +102,9 @@ def generate_flow_with_errors():
             },
             event_id=str(uuid4()),
         ),
-        IncomingEvent(
-            name="Checkout Started",
-            user_id="user_1",
-            anonymous_id="anon_1",
-            timestamp=ts,
-            properties={
-                "cart_id": "cart_1",
-            },
-            event_id=str(uuid4()),
-        ),
+        # skip error: Checkout Started is intentionally omitted here so that
+        # Order Completed fires without a preceding Checkout Started.
+        # This triggers purchase_without_checkout.
         IncomingEvent(
             name="Order Completed",
             user_id="user_1",
@@ -106,6 +114,19 @@ def generate_flow_with_errors():
                 "order_id": "ord_1",
                 "revenue": "499",  # error: should be number
                 "currency": "INR",
+            },
+            event_id=str(uuid4()),
+        ),
+        # id_mismatch error: Order Refunded references a different order_id
+        # than the one completed above, so no matching purchase exists.
+        IncomingEvent(
+            name="Order Refunded",
+            user_id="user_1",
+            anonymous_id="anon_1",
+            timestamp=ts,
+            properties={
+                "order_id": "ord_WRONG",  # error: id_mismatch — does not match ord_1
+                "refund_amount": 499.0,
             },
             event_id=str(uuid4()),
         ),

@@ -3,42 +3,71 @@
     {
       "name": "Page Viewed",
       "required_properties": ["page_url", "session_id"],
-      "property_types": {
-        "page_url": "string",
-        "session_id": "string"
-      },
+      "property_types": { "page_url": "string", "session_id": "string" },
       "identity_required": false,
       "allowed_previous_events": []
     },
     {
       "name": "Article Read",
-      "required_properties": ["article_id", "duration_seconds"],
-      "property_types": {
-        "article_id": "string",
-        "duration_seconds": "number"
-      },
+      "required_properties": ["article_id", "title", "duration_seconds", "scroll_depth_pct"],
+      "property_types": { "article_id": "string", "title": "string", "duration_seconds": "number", "scroll_depth_pct": "number" },
       "identity_required": true,
       "allowed_previous_events": ["Page Viewed"]
+    },
+    {
+      "name": "Article Shared",
+      "required_properties": ["article_id", "channel"],
+      "property_types": { "article_id": "string", "channel": "string" },
+      "identity_required": true,
+      "allowed_previous_events": ["Article Read"],
+      "allowed_values": { "channel": ["twitter", "whatsapp", "facebook", "copy_link", "email"] }
     },
     {
       "name": "Video Started",
-      "required_properties": ["video_id", "duration_seconds"],
-      "property_types": {
-        "video_id": "string",
-        "duration_seconds": "number"
-      },
+      "required_properties": ["video_id", "title", "duration_seconds"],
+      "property_types": { "video_id": "string", "title": "string", "duration_seconds": "number" },
       "identity_required": true,
       "allowed_previous_events": ["Page Viewed"]
     },
     {
-      "name": "Video Completed",
-      "required_properties": ["video_id", "duration_seconds"],
-      "property_types": {
-        "video_id": "string",
-        "duration_seconds": "number"
-      },
+      "name": "Video Paused",
+      "required_properties": ["video_id", "position_seconds"],
+      "property_types": { "video_id": "string", "position_seconds": "number" },
       "identity_required": true,
       "allowed_previous_events": ["Video Started"]
+    },
+    {
+      "name": "Video Completed",
+      "required_properties": ["video_id", "duration_seconds", "watch_pct"],
+      "property_types": { "video_id": "string", "duration_seconds": "number", "watch_pct": "number" },
+      "identity_required": true,
+      "allowed_previous_events": ["Video Started"]
+    },
+    {
+      "name": "Content Bookmarked",
+      "required_properties": ["content_id", "content_type"],
+      "property_types": { "content_id": "string", "content_type": "string" },
+      "identity_required": true,
+      "allowed_previous_events": ["Page Viewed"],
+      "allowed_values": { "content_type": ["article", "video", "podcast"] }
+    },
+    {
+      "name": "Search Performed",
+      "required_properties": ["query", "result_count"],
+      "property_types": { "query": "string", "result_count": "number" },
+      "identity_required": false,
+      "allowed_previous_events": []
+    },
+    {
+      "name": "Subscription Started",
+      "required_properties": ["plan", "billing_cycle"],
+      "property_types": { "plan": "string", "billing_cycle": "string" },
+      "identity_required": true,
+      "allowed_previous_events": ["Page Viewed"],
+      "allowed_values": {
+        "plan": ["basic", "premium", "student"],
+        "billing_cycle": ["monthly", "annual"]
+      }
     }
   ]
 }
